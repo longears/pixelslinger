@@ -20,6 +20,7 @@ func MakePatternMidiSwitcher(locations []float64) ByteThread {
             "raver-plaid",
             "shield",
             "spatial-stripes",
+            "eye",
         }
 
         // channels for communication with subpattern
@@ -32,14 +33,14 @@ func MakePatternMidiSwitcher(locations []float64) ByteThread {
 
             // decide which subpattern we want for this frame
 
-            // VERSION A for testing
-            switchKnob := colorutils.PosMod2(t, 1)
-            _ = config.SWITCH_KNOB
+            // // VERSION A for testing
+            // switchKnob := colorutils.PosMod2(t, 1)
+            // _ = config.SWITCH_KNOB
 
-            // // VERSION B for production
-            // _ = t
-            // _ = colorutils.PosMod
-			// switchKnob := float64(midiState.ControllerValues[config.SWITCH_KNOB]) / 127.0
+            // VERSION B for production
+            _ = t
+            _ = colorutils.PosMod
+			switchKnob := float64(midiState.ControllerValues[config.SWITCH_KNOB]) / 127.0
 
             // assume switchKnob is between 0 and 1
             ii := int(switchKnob * float64(len(PATTERN_LIST)) * 0.99999)

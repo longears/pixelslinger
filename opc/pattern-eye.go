@@ -56,6 +56,7 @@ func MakePatternEye(locations []float64) ByteThread {
 
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
+			n_actual_pixels := len(bytes) / 3
 			if n_pixels > 160 {
 				n_pixels = 160
 			}
@@ -154,6 +155,13 @@ func MakePatternEye(locations []float64) ByteThread {
 
 				//--------------------------------------------------------------------------------
 			}
+            
+            // the rest of the unused pixels should be black
+			for ii := n_pixels; ii < n_actual_pixels; ii++ {
+				bytes[ii*3+0] = 0;
+				bytes[ii*3+1] = 0;
+				bytes[ii*3+2] = 0;
+            }
 
 			// Send our completed byte slice over the output channel
 			bytesOut <- bytes
