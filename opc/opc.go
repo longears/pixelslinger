@@ -7,6 +7,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -130,8 +131,14 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 	var err error
 
 	for {
+		cmd := exec.Command("/home/root/led1off.sh")
+		_, _ = cmd.Output()
+
 		// wait to get a slice to send
 		values := <-sendThisSlice
+
+		cmd = exec.Command("/home/root/led1on.sh")
+		_, _ = cmd.Output()
 
 		// if the connection has gone bad, make a new one
 		if conn == nil {
@@ -171,6 +178,7 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 			continue
 		}
 		sliceIsSent <- 1
+
 	}
 }
 
