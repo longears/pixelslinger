@@ -143,6 +143,7 @@ func mainLoop(nPixels int, sourceThread, effectThread, destThread opc.ByteThread
 	// set initial values for controller knobs
 	//  because the midi hardware only sends us values when the knobs move
 	midiState.ControllerValues[1] = 127
+	midiState.ControllerValues[2] = 127
 
 	// launch the threads
 	go sourceThread(bytesToFillChan, toEffectChan, &midiState)
