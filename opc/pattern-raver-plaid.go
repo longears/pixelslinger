@@ -27,7 +27,7 @@ func MakePatternRaverPlaid(locations []float64) ByteThread {
 
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
-			t := float64(time.Now().UnixNano())/1.0e9 - 1374000000
+			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 
 			// fill in bytes array
 			for ii := 0; ii < n_pixels; ii++ {

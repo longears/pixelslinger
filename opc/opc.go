@@ -154,7 +154,7 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 			spiBytes := make([]byte, 0)
 
 			// leading zeros to begin a new frame of bytes
-			numZeroes := (len(bytes) + 31)/32 + 1;
+			numZeroes := (len(bytes)+31)/32 + 1
 			for ii := 0; ii < numZeroes*5; ii++ {
 				spiBytes = append(spiBytes, 0)
 			}
@@ -170,20 +170,20 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 			spiBytes = append(spiBytes, 0)
 
 			// write spiBytes to the wire in chunks
-            //fmt.Println("sending", len(bytes), " + ", numZeroes, " zeroes = ", len(spiBytes), "bytes")
-            bytesSent := 0
-            for ii := 0; ii < len(spiBytes); ii += SPI_CHUNK_SIZE {
-                endIndex := ii + SPI_CHUNK_SIZE
-                if endIndex > len(spiBytes) {
-                    endIndex = len(spiBytes)
-                }
-                thisChunk := spiBytes[ii:endIndex]
-                bytesSent += len(thisChunk)
-                if _, err := spiFile.Write(thisChunk); err != nil {
-                    panic(err)
-                }
-            }
-            //fmt.Println(bytesSent,len(spiBytes))
+			//fmt.Println("sending", len(bytes), " + ", numZeroes, " zeroes = ", len(spiBytes), "bytes")
+			bytesSent := 0
+			for ii := 0; ii < len(spiBytes); ii += SPI_CHUNK_SIZE {
+				endIndex := ii + SPI_CHUNK_SIZE
+				if endIndex > len(spiBytes) {
+					endIndex = len(spiBytes)
+				}
+				thisChunk := spiBytes[ii:endIndex]
+				bytesSent += len(thisChunk)
+				if _, err := spiFile.Write(thisChunk); err != nil {
+					panic(err)
+				}
+			}
+			//fmt.Println(bytesSent,len(spiBytes))
 
 			bytesOut <- bytes
 		}
