@@ -215,6 +215,13 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 				r := gamma_lookup[bytes[ii+0]]
 				g := gamma_lookup[bytes[ii+1]]
 				b := gamma_lookup[bytes[ii+2]]
+
+				// white balance for the white stripes
+				if ii >= 160*3 {
+					g = byte(float64(b) * 0.75)
+					b = byte(float64(b) * 0.6)
+				}
+
 				// format for LPD8806
 				// high bit must be always on, remaining seven bits are data
 				r = 128 | (r >> 1)
