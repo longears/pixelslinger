@@ -6,6 +6,7 @@ package opc
 
 import (
 	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
 	"time"
 )
@@ -13,9 +14,8 @@ import (
 func MakeEffectFader(locations []float64) ByteThread {
 
 	var (
-		flashDuration = 3.0 / 40.0 // seconds
-		eyelidBlend   = 0.25       // size of eyelid gradient relative to bounding box
-
+		flashDuration = 3.0 / 40.0 // in seconds
+		eyelidBlend   = 0.25       // size of eyelid gradient relative to entire bounding box
 	)
 
 	// get bounding box
@@ -42,21 +42,21 @@ func MakeEffectFader(locations []float64) ByteThread {
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 
 			// flash white when pad is down
-			pad1 := midiState.KeyVolumes[midi.LPD8_PAD1]
+			pad1 := midiState.KeyVolumes[config.FLASH_PAD]
 			if pad1 > 0 {
 				lastFlashTime = t
 			}
 			flashAmt := colorutils.Clamp(colorutils.Remap(t-lastFlashTime, 0, flashDuration, 1, 0), 0, 1)
 
 			// gain knob
-			knob1 := float64(midiState.ControllerValues[midi.LPD8_KNOB1]) / 127.0
-			gain0 := colorutils.Clamp(colorutils.Remap(knob1, 0.75, 0.95, 0, 1), 0, 1)
-			gain1 := colorutils.Clamp(colorutils.Remap(knob1, 0.40, 0.50, 0, 1), 0, 1)
-			gain2 := colorutils.Clamp(colorutils.Remap(knob1, 0.05, 0.25, 0, 1), 0, 1)
+			gainKnob := float64(midiState.ControllerValues[config.GAIN_KNOB]) / 127.0
+			gain0 := colorutils.Clamp(colorutils.Remap(gainKnob, 0.75, 0.95, 0, 1), 0, 1)
+			gain1 := colorutils.Clamp(colorutils.Remap(gainKnob, 0.40, 0.50, 0, 1), 0, 1)
+			gain2 := colorutils.Clamp(colorutils.Remap(gainKnob, 0.05, 0.25, 0, 1), 0, 1)
 
 			// eyelid knob
-			knob2 := float64(midiState.ControllerValues[midi.LPD8_KNOB2]) / 127.0
-			knob2 = colorutils.Clamp(colorutils.Remap(knob2, 0.05, 0.95, 0, 1), 0, 1)
+			eyelidKnob := float64(midiState.ControllerValues[config.EYELID_KNOB]) / 127.0
+			eyelidKnob = colorutils.Clamp(colorutils.Remap(eyelidKnob, 0.05, 0.95, 0, 1), 0, 1)
 
 			// fill in bytes array
 			for ii := 0; ii < n_pixels; ii++ {
@@ -89,8 +89,8 @@ func MakeEffectFader(locations []float64) ByteThread {
 
 				// eyelid
 				eyelid := colorutils.Clamp(colorutils.Remap(zp,
-					knob2-(1-zp)*eyelidBlend/2,
-					knob2+zp*eyelidBlend/2, 1, 0), 0, 1)
+					eyelidKnob - (1-zp)*eyelidBlend/2,
+					eyelidKnob + zp*eyelidBlend/2, 1, 0), 0, 1)
 				r *= eyelid
 				g *= eyelid
 				b *= eyelid
