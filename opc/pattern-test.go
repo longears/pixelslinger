@@ -21,9 +21,9 @@ func MakePatternTest(locations []float64) ByteThread {
 			var r, g, b float64
 			// mode 0: random solid color across whole strip
 			if int(t/3)%3 == 0 {
-				r = colorutils.Remap(rng.Float64(), 0, 1, 0.2, 1)
-				g = colorutils.Remap(rng.Float64(), 0, 1, 0.2, 1)
-				b = colorutils.Remap(rng.Float64(), 0, 1, 0.2, 1)
+				r = colorutils.Remap(rng.Float64(), 0, 1, 0.1, 1)
+				g = colorutils.Remap(rng.Float64(), 0, 1, 0.1, 1)
+				b = colorutils.Remap(rng.Float64(), 0, 1, 0.1, 1)
 			}
 			for ii := 0; ii < n_pixels; ii++ {
 
