@@ -121,7 +121,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	frameStartTime := startTime
 	frameEndTime := startTime
 	framesSinceLastPrint := 0
-	firstIteration := true
+	//firstIteration := true
 	flipper := 0
 	for {
 		// if we have any frame budget left from last time around, sleep to control the framerate
@@ -155,9 +155,9 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 		// if this is the first time through the loop we have to skip
 		//  the sending stage or we'll send out a whole bunch of zeros.
 		bytesToFillChan <- fillingSlice
-		if !firstIteration {
-			bytesToSendChan <- sendingSlice
-		}
+		//if !firstIteration {
+		bytesToSendChan <- sendingSlice
+		//}
 
 		// if only sending one frame, let's just get it all over with now
 		//  or we'd have to compute two frames worth of pixels because of
@@ -173,14 +173,14 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 
 		// wait until both filling and sending threads are done
 		<-bytesFilledChan
-		if !firstIteration {
-			<-bytesSentChan
-		}
+		//if !firstIteration {
+		<-bytesSentChan
+		//}
 
 		// swap the slices
 		sendingSlice, fillingSlice = fillingSlice, sendingSlice
 
-		firstIteration = false
+		//firstIteration = false
 	}
 }
 
