@@ -73,7 +73,7 @@ func ParseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
 }
 
 // Read locations from JSON file into a slice of floats
-func readLocations(fn string) []float64 {
+func ReadLocations(fn string) []float64 {
 	locations := make([]float64, 0)
 	var file *os.File
 	var err error
@@ -96,7 +96,7 @@ func readLocations(fn string) []float64 {
 		z, err = strconv.ParseFloat(coordStrings[2], 64)
 		locations = append(locations, x, y, z)
 	}
-	fmt.Printf("[opc.readLocations] Read %v pixel locations from %s\n", len(locations), fn)
+	fmt.Printf("[opc.ReadLocations] Read %v pixel locations from %s\n", len(locations), fn)
 	return locations
 }
 
@@ -126,7 +126,7 @@ func getConnection(ipPort string) net.Conn {
 // Initiate and Maintain a connection to ipPort.
 // When a slice comes in through sendThisSlice, send it with an OPC header.
 // Loop forever.
-func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
+func NetworkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
 	var conn net.Conn
 	var err error
 
@@ -206,7 +206,7 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 	frame_budget_ms := 1000.0 / fps
 
 	// load location and build initial slices
-	locations := readLocations(layoutPath)
+	locations := ReadLocations(layoutPath)
 	n_pixels := len(locations) / 3
 	values := make([][]byte, 2)
 	values[0] = make([]byte, n_pixels*3)
@@ -220,7 +220,7 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 	sliceIsSent := make(chan int, 0)
 
 	// start threads
-	go networkThread(sendThisSlice, sliceIsSent, ipPort)
+	go NetworkThread(sendThisSlice, sliceIsSent, ipPort)
 	go pixelThread(fillThisSlice, sliceIsFilled, locations)
 
 	// main loop
