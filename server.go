@@ -3,34 +3,13 @@ package main
 import (
 	"fmt"
     "time"
+    "strconv"
 	"os"
 )
 
-func sendByte(fd *os.File, b byte) {
-	fmt.Println("[sendByte]", b)
-	buf := make([]byte, 1)
-	buf[0] = b
-	if _, err := fd.Write(buf); err != nil {
-		panic(err)
-	}
-}
-
-func spiThread(pixelsToSend chan []byte, sendingIsDone chan int) {
-
-	spiFn := "/dev/spidev1.0"
-    ledFn := "/sys/class/leds/beaglebone:green:usr0/brightness"
-
-	// open output file
-	spiFile, err := os.Create(spiFn)
-	if err != nil {
-		panic(err)
-	}
-	// close spiFile on exit and check for its returned error
-	defer func() {
-		if err := spiFile.Close(); err != nil {
-			panic(err)
-		}
-	}()
+func setLED(ledNum int, val int) {
+    ledFn := fmt.Sprintf("/sys/class/leds/beaglebone:green:usr%d/brightness", ledNum)
+    fmt.Println(ledFn)
 
 	// open output file
 	ledFile, err := os.Create(ledFn)
@@ -44,17 +23,42 @@ func spiThread(pixelsToSend chan []byte, sendingIsDone chan int) {
 		}
 	}()
 
-    flipper := false
+	if _, err := ledFile.WriteString(strconv.Itoa(val)); err != nil {
+		panic(err)
+	}
+}
 
+func sendByte(fd *os.File, b byte) {
+	fmt.Println("[sendByte]", b)
+	buf := make([]byte, 1)
+	buf[0] = b
+	if _, err := fd.Write(buf); err != nil {
+		panic(err)
+	}
+}
+
+func spiThread(pixelsToSend chan []byte, sendingIsDone chan int) {
+
+	spiFn := "/dev/spidev1.0"
+
+	// open output file
+	spiFile, err := os.Create(spiFn)
+	if err != nil {
+		panic(err)
+	}
+	// close spiFile on exit and check for its returned error
+	defer func() {
+		if err := spiFile.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+    flipper := 0
 	for pixels := range pixelsToSend {
 		fmt.Println("[send] starting to send", len(pixels), "values")
 
-        if flipper {
-            sendByte(ledFile, byte('0'))
-        } else {
-            sendByte(ledFile, byte('1'))
-        }
-        flipper = ! flipper
+        setLED(0, flipper)
+        flipper = 1 - flipper
 
 		// zeros
 		numZeroes := (len(pixels) / 32) + 2
@@ -91,7 +95,7 @@ func main() {
         fmt.Println("[main] pixels =", pixels)
         pixelsToSend <- pixels
         <-sendingIsDone
-        time.Sleep(1000 * time.Millisecond)
+        time.Sleep(600 * time.Millisecond)
     }
 
 	fmt.Println("--------------------------------------------------------------------------------/")
