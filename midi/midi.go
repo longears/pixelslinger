@@ -28,10 +28,10 @@ const STOP = byte(12)
 // MIDIMESSAGE TYPE
 
 type MidiMessage struct {
-	kind    byte // one of the constants above
-	channel byte // either a channel number of one of the special channel constants
-	key     byte // key, controller, instrument
-	value   byte // velocity, touch, controller value, channel pressure
+	Kind    byte // one of the constants above
+	Channel byte // either a channel number of one of the special channel constants
+	Key     byte // key, controller, instrument
+	Value   byte // velocity, touch, controller value, channel pressure
 }
 
 func debug(s string) {
@@ -40,7 +40,7 @@ func debug(s string) {
 
 func (m *MidiMessage) String() string {
 	kindStr := "other"
-	switch m.kind {
+	switch m.Kind {
 	case NOTE_OFF:
 		kindStr = "NOTE_OFF"
 	case NOTE_ON:
@@ -53,9 +53,9 @@ func (m *MidiMessage) String() string {
 		kindStr = "SYSTEM"
 	}
 	if kindStr == "other" {
-		return fmt.Sprintf("(%#x ch=%v key=%v val=%v)", m.kind, m.channel, m.key, m.value)
+		return fmt.Sprintf("(%#x ch=%v key=%v val=%v)", m.Kind, m.Channel, m.Key, m.Value)
 	} else {
-		return fmt.Sprintf("(%s ch=%v key=%v val=%v)", kindStr, m.channel, m.key, m.value)
+		return fmt.Sprintf("(%s ch=%v key=%v val=%v)", kindStr, m.Channel, m.Key, m.Value)
 	}
 }
 
@@ -79,10 +79,10 @@ func MidiStreamParserThread(inCh chan byte, outCh chan *MidiMessage) {
 		if b >= 128 {
 			debug("     this is a control byte")
 			message = new(MidiMessage)
-			message.kind = b & 0xf0
-			message.channel = b & 0x0f
+			message.Kind = b & 0xf0
+			message.Channel = b & 0x0f
 			ii = 1
-			if message.kind == SYSTEM && (message.channel == CLOCK || message.channel == START || message.channel == STOP) {
+			if message.Kind == SYSTEM && (message.Channel == CLOCK || message.Channel == START || message.Channel == STOP) {
 				debug("sending")
 				outCh <- message
 				ii = 0
@@ -99,9 +99,9 @@ func MidiStreamParserThread(inCh chan byte, outCh chan *MidiMessage) {
 			continue
 		} else if ii == 1 {
 			debug("     1")
-			message.key = b
+			message.Key = b
 			// these kinds expect 1 data byte, so we might be done:
-			if message.kind == PROGRAM_CHANGE || message.kind == CHANNEL_PRESSURE {
+			if message.Kind == PROGRAM_CHANGE || message.Kind == CHANNEL_PRESSURE {
 				debug("sending")
 				outCh <- message
 				ii = 0
@@ -109,9 +109,9 @@ func MidiStreamParserThread(inCh chan byte, outCh chan *MidiMessage) {
 			}
 		} else if ii == 2 {
 			debug("     2")
-			message.value = b
+			message.Value = b
 			// these kinds expect 2 data bytes, so we might be done:
-			if message.kind == NOTE_OFF || message.kind == NOTE_ON || message.kind == AFTERTOUCH || message.kind == CONTROLLER || message.kind == PITCH_BEND {
+			if message.Kind == NOTE_OFF || message.Kind == NOTE_ON || message.Kind == AFTERTOUCH || message.Kind == CONTROLLER || message.Kind == PITCH_BEND {
 				debug("sending")
 				outCh <- message
 				ii = 0

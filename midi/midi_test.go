@@ -47,7 +47,7 @@ func midiTest(t *testing.T, bytes []byte, expectedMessageKinds []byte) {
 		return
 	}
 	for ii := range midiMessages {
-		if midiMessages[ii].kind != expectedMessageKinds[ii] {
+		if midiMessages[ii].Kind != expectedMessageKinds[ii] {
 			t.Errorf("incorrect message kind")
 		}
 	}
