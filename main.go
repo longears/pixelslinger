@@ -163,6 +163,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 		//  or we'd have to compute two frames worth of pixels because of
 		//  the double buffering effect of the two parallel threads
 		if *ONCE {
+			<-bytesSentChan
 			// get filled bytes and send them
 			bytesToSendChan <- <-bytesFilledChan
 			// wait for sending to complete

@@ -5,7 +5,6 @@ package opc
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"fmt"
 	"math/rand"
 	"time"
 )
