@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func MakePatternRaverPlaid(locations []float64) ByteThread {
+func MakePatternBasicMidi(locations []float64) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		// pattern parameters
 		var (

@@ -1,6 +1,7 @@
 package opc
 
 import (
+	"bitbucket.org/davidwallace/go-metal/midi"
 	"bufio"
 	"fmt"
 	"math"
@@ -23,7 +24,7 @@ import (
 // They should loop forever until the input channel is closed, then return.
 // The byte slice should hold values from 0 to 255 in [r g b  r g b  r g b  ... ] order
 // so its total length is 3 times the number of pixels in the LED strip.
-type ByteThread func(chan []byte, chan []byte)
+type ByteThread func(chan []byte, chan []byte, chan *midi.MidiMessage)
 
 //--------------------------------------------------------------------------------
 // CONSTANTS
@@ -101,7 +102,7 @@ func getConnection(ipPort string) net.Conn {
 // Returns a ByteThread which passes byte slices from the input to
 // the output channels without doing anything.
 func MakeSendToDevNullThread() ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		fmt.Println("[opc.SendToDevNullThread] starting up")
 		for bytes := range bytesIn {
 			bytesOut <- bytes
@@ -113,7 +114,7 @@ func MakeSendToDevNullThread() ByteThread {
 func MakeSendToScreenThread() ByteThread {
 	const MAX_LEN = 19
 	result := make([]string, MAX_LEN)
-	return func(bytesIn chan []byte, bytesOut chan []byte) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		fmt.Println("[opc.SendToDevNullThread] starting up")
 		for bytes := range bytesIn {
 			for ii := 0; ii < len(bytes) && ii < MAX_LEN; ii++ {
@@ -134,7 +135,7 @@ func MakeSendToScreenThread() ByteThread {
 // If the SPI device can't be opened, exit the whole program with exit status 1.
 // This chipset expects colors in [g r b] order; this function swaps it for you
 func MakeSendToLPD8806Thread(spiFn string) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		fmt.Println("[opc.SendToLPD8806Thread] starting up")
 
 		// open output file and keep the file descriptor around
@@ -224,7 +225,7 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 // Silently drop bytes if it's not possible to send them.
 // Creates OPC headers for each byte slice it sends.
 func MakeSendToOpcThread(ipPort string) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		fmt.Println("[opc.SendToOpcThread] starting up")
 
 		var conn net.Conn

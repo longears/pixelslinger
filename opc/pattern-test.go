@@ -5,12 +5,13 @@ package opc
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
+	"bitbucket.org/davidwallace/go-metal/midi"
 	"math/rand"
 	"time"
 )
 
 func MakePatternTest(locations []float64) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		rng := rand.New(rand.NewSource(99))
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3

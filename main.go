@@ -5,6 +5,7 @@ package main
 
 import (
 	"bitbucket.org/davidwallace/go-metal/beaglebone"
+	"bitbucket.org/davidwallace/go-metal/midi"
 	"bitbucket.org/davidwallace/go-metal/opc"
 	"fmt"
 	"github.com/davecheney/profile"
@@ -34,6 +35,7 @@ var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one fram
 // Return the number of pixels in the layout, the source and dest thread methods.
 func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	goopt.Summary = "Available patterns:\n"
+	goopt.Summary += "          basic-midi \n"
 	goopt.Summary += "          off \n"
 	goopt.Summary += "          raver-plaid \n"
 	goopt.Summary += "          spatial-stripes \n"
@@ -55,6 +57,8 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 
 	// choose source thread method
 	switch *SOURCE {
+	case "basic-midi":
+		sourceThread = opc.MakePatternBasicMidi(locations)
 	case "off":
 		sourceThread = opc.MakePatternOff(locations)
 	case "raver-plaid":
@@ -107,6 +111,12 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 		fmt.Println("[mainLoop] Running forever")
 	}
 
+    // set up midi
+	midiMessageChan, err := midi.GetMidiMessageStream("/dev/midi1")
+	if err != nil {
+        fmt.Println("[mainLoop] ERROR: could not open midi device")
+	}
+
 	// prepare the byte slices and channels that connect the source and dest threads
 	fillingSlice := make([]byte, nPixels*3)
 	sendingSlice := make([]byte, nPixels*3)
@@ -117,8 +127,8 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	bytesSentChan := make(chan []byte, 0)
 
 	// launch the threads
-	go sourceThread(bytesToFillChan, bytesFilledChan)
-	go destThread(bytesToSendChan, bytesSentChan)
+	go sourceThread(bytesToFillChan, bytesFilledChan, midiMessageChan)
+	go destThread(bytesToSendChan, bytesSentChan, midiMessageChan)
 
 	// main loop
 	frame_budget_ms := 1000.0 / fps

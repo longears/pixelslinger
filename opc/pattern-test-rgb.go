@@ -5,11 +5,12 @@ package opc
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
+	"bitbucket.org/davidwallace/go-metal/midi"
 	"time"
 )
 
 func MakePatternTestRGB(locations []float64) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
