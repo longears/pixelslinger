@@ -28,11 +28,9 @@ func setLED(ledNum int, val int) {
 	}
 }
 
-func sendByte(fd *os.File, b byte) {
-	fmt.Println("[sendByte]", b)
-	buf := make([]byte, 1)
-	buf[0] = b
-	if _, err := fd.Write(buf); err != nil {
+func sendBytes(fd *os.File, bytes []byte) {
+	fmt.Println("[sendBytes]", bytes)
+	if _, err := fd.Write(bytes); err != nil {
 		panic(err)
 	}
 }
@@ -60,21 +58,24 @@ func spiThread(pixelsToSend chan []byte, sendingIsDone chan int) {
         setLED(0, flipper)
         flipper = 1 - flipper
 
+        bytes := make([]byte, 0)
+
 		// zeros
 		numZeroes := (len(pixels) / 32) + 2
-		for ii := 0; ii < numZeroes; ii++ {
-			sendByte(spiFile, 0)
+		for ii := 0; ii < numZeroes*5; ii++ {
+            bytes = append(bytes, 0)
 		}
 
 		// pixels
 		for _, v := range pixels {
 			// high bit is always on, remaining seven bits are data
 			v2 := 128 | (v >> 1)
-			sendByte(spiFile, v2)
+            bytes = append(bytes, v2)
 		}
 
 		// final zero
-		sendByte(spiFile, 0)
+        bytes = append(bytes, 0)
+        sendBytes(spiFile, bytes)
 
 		sendingIsDone <- 1
 	}
@@ -89,13 +90,13 @@ func main() {
 
     for ii := 0; true; ii = (ii + 1) % 256 {
         pixels := []byte{255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0}
-        pixels[9] = byte(ii % 256)
-        pixels[10] = byte((ii*7) % 256)
-        pixels[11] = byte((ii*73) % 256)
+        pixels[9] = byte((ii*9) % 256)
+        pixels[10] = byte((ii*9) % 256)
+        pixels[11] = byte((ii*9) % 256)
         fmt.Println("[main] pixels =", pixels)
         pixelsToSend <- pixels
         <-sendingIsDone
-        time.Sleep(600 * time.Millisecond)
+        time.Sleep(300 * time.Millisecond)
     }
 
 	fmt.Println("--------------------------------------------------------------------------------/")
