@@ -89,23 +89,6 @@ func FloatToByte(x float64) byte {
 	}
 }
 
-// Given a float in the range 0-1, return a byte from 0 to 255.
-// Clamp out-of-range values at 0 or 255.
-// Same as FloatToByte, but does temporal dithering.
-func FloatToByteDithered(x float64) byte {
-	if x >= 1 {
-		return 255
-	} else if x <= 0 {
-		return 0
-	} else {
-        intPart, floatPart := math.Modf(x * 254.999)
-        if RND.Float64() < floatPart {
-            return byte(intPart)+1
-        }
-        return byte(intPart)
-	}
-}
-
 //================================================================================
 // COLOR UTILS
 
