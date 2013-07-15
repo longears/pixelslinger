@@ -2,6 +2,24 @@ package colorutils
 
 import "testing"
 
+func floatToByteTestHelper(t *testing.T, x float64, result byte) {
+	if tmp := FloatToByte(x); tmp != result {
+		t.Errorf("FloatToByte(%f) = %d, want %d", x, tmp, result)
+	}
+}
+func TestFloatToByte(t *testing.T) {
+	// x
+	floatToByteTestHelper(t, 0.0, 0)
+	floatToByteTestHelper(t, 0.001, 0)
+	floatToByteTestHelper(t, 0.999/256, 1)
+	floatToByteTestHelper(t, 1.001/256, 1)
+	floatToByteTestHelper(t, 8.499/256, 8)
+	floatToByteTestHelper(t, 8.501/256, 9)
+	floatToByteTestHelper(t, 0.5, 128)
+	floatToByteTestHelper(t, 1.0, 255)
+	floatToByteTestHelper(t, 0.999, 255)
+}
+
 func remapTestHelper(t *testing.T, x, oldmin, oldmax, newmin, newmax, result float64) {
 	if tmp := Remap(x, oldmin, oldmax, newmin, newmax); tmp != result {
 		t.Errorf("Remap(%f,%f,%f,%f,%f) = %f, want %f", x, oldmin, oldmax, newmin, newmax, tmp, result)

@@ -2,6 +2,11 @@ package colorutils
 
 import "math"
 
+// Given a float in the range 0-1, return a byte from 0 to 255.
+func FloatToByte(x float64) byte {
+    return byte(Clamp(x+0.5/256, 0, 0.99999) * 256)
+}
+
 // Remap the float x from the range oldmin-oldmax to the range newmin-newmax
 // Does not clamp values that exceed min or max.
 // For example, to make a sine wave that goes between 0 and 256:
