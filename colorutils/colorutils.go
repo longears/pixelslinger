@@ -7,7 +7,7 @@ func FloatToByte(x float64) byte {
 	if x >= 1 {
 		return 255
 	} else {
-        // this works for x < 0 but not x > 1
+		// this works for x < 0 but not x > 1
 		return byte(x * 256)
 	}
 }
@@ -30,14 +30,14 @@ func Remap(x, oldmin, oldmax, newmin, newmax float64) float64 {
 func Clamp(x, minn, maxx float64) float64 {
 	//return math.Max(minn, math.Min(maxx, x))
 
-    // this is much faster than using math.Max
-    if x <= minn {
-        return minn
-    } else if x >= maxx {
-        return maxx
-    } else {
-        return x
-    }
+	// this is much faster than using math.Max
+	if x <= minn {
+		return minn
+	} else if x >= maxx {
+		return maxx
+	} else {
+		return x
+	}
 }
 
 //A cosine curve scaled to fit in a 0-1 range and 0-1 domain by default.

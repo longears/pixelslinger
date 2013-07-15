@@ -7,7 +7,7 @@ import "github.com/davecheney/profile"
 
 func main() {
 
-    defer profile.Start(profile.CPUProfile).Stop()
+	defer profile.Start(profile.CPUProfile).Stop()
 
 	const N_PIXELS = 1000
 	var array = make([]byte, N_PIXELS*3)
@@ -15,9 +15,9 @@ func main() {
 	var pct, r, g, b, t float64
 	var last_print = float64(time.Now().UnixNano()) / 1.0e9
 	var frames = 0
-    var start_time = last_print
-    t = start_time
-	for (t < start_time + 5) {
+	var start_time = last_print
+	t = start_time
+	for t < start_time+5 {
 		t = float64(time.Now().UnixNano()) / 1.0e9
 		frames += 1
 		if t > last_print+1 {

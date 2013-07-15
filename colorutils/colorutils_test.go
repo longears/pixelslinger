@@ -20,6 +20,11 @@ func TestFloatToByte(t *testing.T) {
 	floatToByteTestHelper(t, 1.0, 255)
 	floatToByteTestHelper(t, 2.0, 255)
 }
+func BenchmarkFloatToByte(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		FloatToByte(0.5)
+	}
+}
 
 func remapTestHelper(t *testing.T, x, oldmin, oldmax, newmin, newmax, result float64) {
 	if tmp := Remap(x, oldmin, oldmax, newmin, newmax); tmp != result {
@@ -53,6 +58,11 @@ func TestRemap(t *testing.T) {
 	// degenerate output range
 	remapTestHelper(t, 20.0, 10.0, 20.0, 1.0, 1.0, 1.0)
 }
+func BenchmarkRemap(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Remap(0.8, 0.0, 1.0, 0.0, 1.0)
+	}
+}
 
 func clampTestHelper(t *testing.T, x, minn, maxx, result float64) {
 	if tmp := Clamp(x, minn, maxx); tmp != result {
@@ -66,6 +76,11 @@ func TestClamp(t *testing.T) {
 	clampTestHelper(t, 0.5, 0.0, 1.0, 0.5)
 	clampTestHelper(t, 1.0, 0.0, 1.0, 1.0)
 	clampTestHelper(t, 2.0, 0.0, 1.0, 1.0)
+}
+func BenchmarkClamp(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Clamp(0.5, 0, 1)
+	}
 }
 
 func cosTestHelper(t *testing.T, x, offset, period, minn, maxx, result float64) {
@@ -88,6 +103,11 @@ func TestCos(t *testing.T) {
 	cosTestHelper(t, 0.5, 0.0, 1.0, 4.0, 5.0, 4.0)
 	cosTestHelper(t, 1.0, 0.0, 1.0, 4.0, 5.0, 5.0)
 }
+func BenchmarkCos(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Cos(0.0, 0.0, 1.0, 0.0, 1.0)
+	}
+}
 
 func contrastTestHelper(t *testing.T, x, center, mult, result float64) {
 	if tmp := Contrast(x, center, mult); tmp != result {
@@ -98,6 +118,11 @@ func TestContrast(t *testing.T) {
 	// x, center, mult
 	contrastTestHelper(t, 0.0, 0.5, 0.5, 0.25)
 	contrastTestHelper(t, 0.0, 0.5, 2.0, -0.5)
+}
+func BenchmarkContrast(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Contrast(0.3, 0.3, 0.3)
+	}
 }
 
 func clipBlackTestHelper(t *testing.T, x, threshold, result float64) {
@@ -110,6 +135,11 @@ func TestClipBlack(t *testing.T) {
 	clipBlackTestHelper(t, 0.0, 0.0, 0.0)
 	clipBlackTestHelper(t, 0.1, 0.2, 0.0)
 	clipBlackTestHelper(t, 0.3, 0.2, 0.3)
+}
+func BenchmarkClipBlack(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ClipBlack(0.4, 0.3)
+	}
 }
 
 func modDistTestHelper(t *testing.T, a, b, n, result float64) {
@@ -141,6 +171,11 @@ func TestModDist(t *testing.T) {
 	modDistTestHelper(t, -71.0, -79.0, 10.0, 2.0)
 	modDistTestHelper(t, -79.0, -71.0, 10.0, 2.0)
 }
+func BenchmarkModDist(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ModDist(1.0, 2.0, 10.0)
+	}
+}
 
 func gammaTestHelper(t *testing.T, x, gamma, result float64) {
 	if tmp := Gamma(x, gamma); tmp != result {
@@ -156,4 +191,9 @@ func TestGamma(t *testing.T) {
 	gammaTestHelper(t, 4.0, 0.5, 2.0)
 	gammaTestHelper(t, 0.0, 1.0, 0.0)
 	gammaTestHelper(t, -1.0, 1.0, 0.0)
+}
+func BenchmarkGamma(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Gamma(0.7, 0.7)
+	}
 }
