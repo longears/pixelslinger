@@ -4,7 +4,12 @@ import "math"
 
 // Given a float in the range 0-1, return a byte from 0 to 255.
 func FloatToByte(x float64) byte {
-    return byte(Clamp(x, 0, 0.999999) * 256)
+	if x >= 1 {
+		return 255
+	} else {
+        // this works for x < 0 but not x > 1
+		return byte(x * 256)
+	}
 }
 
 // Remap the float x from the range oldmin-oldmax to the range newmin-newmax
@@ -23,7 +28,16 @@ func Remap(x, oldmin, oldmax, newmin, newmax float64) float64 {
 
 // Restrict the float x to the range minn-maxx."""
 func Clamp(x, minn, maxx float64) float64 {
-	return math.Max(minn, math.Min(maxx, x))
+	//return math.Max(minn, math.Min(maxx, x))
+
+    // this is much faster than using math.Max
+    if x <= minn {
+        return minn
+    } else if x >= maxx {
+        return maxx
+    } else {
+        return x
+    }
 }
 
 //A cosine curve scaled to fit in a 0-1 range and 0-1 domain by default.
@@ -42,6 +56,7 @@ func Cos(x, offset, period, minn, maxx float64) float64 {
 func Contrast(x, center, mult float64) float64 {
 	return (x-center)*mult + center
 }
+
 // TODO: RGBContrast
 
 // If x is less than threshold, return 0.  Otherwise, return x.
@@ -52,6 +67,7 @@ func ClipBlack(x, threshold float64) float64 {
 		return x
 	}
 }
+
 // TODO: RBGClipBlackByChannel
 // TODO: RBGClipBlackByLuminance
 
@@ -71,4 +87,5 @@ func Gamma(x, gamma float64) float64 {
 		return math.Pow(x, gamma)
 	}
 }
+
 // TODO: RGBGamma
