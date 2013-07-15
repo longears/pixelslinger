@@ -48,3 +48,93 @@ func TestClamp(t *testing.T) {
 	clampTestHelper(t, 1.0, 0.0, 1.0, 1.0)
 	clampTestHelper(t, 2.0, 0.0, 1.0, 1.0)
 }
+
+func cosTestHelper(t *testing.T, x, offset, period, minn, maxx, result float64) {
+	if tmp := Cos(x, offset, period, minn, maxx); tmp != result {
+		t.Errorf("Cos(%f,%f,%f,%f,%f) = %f, want %f", x, offset, period, minn, maxx, tmp, result)
+	}
+}
+func TestCos(t *testing.T) {
+	// x, offset, period, minn, maxx
+	cosTestHelper(t, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0)
+	cosTestHelper(t, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0)
+	cosTestHelper(t, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0)
+
+	cosTestHelper(t, 0.0, 0.0, 2.0, 0.0, 1.0, 1.0)
+	cosTestHelper(t, 1.0, 0.0, 2.0, 0.0, 1.0, 0.0)
+	cosTestHelper(t, 2.0, 0.0, 2.0, 0.0, 1.0, 1.0)
+
+	cosTestHelper(t, 0.0, 0.5, 2.0, 0.0, 1.0, 0.0)
+
+	cosTestHelper(t, 0.5, 0.0, 1.0, 4.0, 5.0, 4.0)
+	cosTestHelper(t, 1.0, 0.0, 1.0, 4.0, 5.0, 5.0)
+}
+
+func contrastTestHelper(t *testing.T, x, center, mult, result float64) {
+	if tmp := Contrast(x, center, mult); tmp != result {
+		t.Errorf("Contrast(%f,%f,%f) = %f, want %f", x, center, mult, tmp, result)
+	}
+}
+func TestContrast(t *testing.T) {
+	// x, center, mult
+	contrastTestHelper(t, 0.0, 0.5, 0.5, 0.25)
+	contrastTestHelper(t, 0.0, 0.5, 2.0, -0.5)
+}
+
+func clipBlackTestHelper(t *testing.T, x, threshold, result float64) {
+	if tmp := ClipBlack(x, threshold); tmp != result {
+		t.Errorf("ClipBlack(%f,%f) = %f, want %f", x, threshold, tmp, result)
+	}
+}
+func TestClipBlack(t *testing.T) {
+	// x, threshold
+	clipBlackTestHelper(t, 0.0, 0.0, 0.0)
+	clipBlackTestHelper(t, 0.1, 0.2, 0.0)
+	clipBlackTestHelper(t, 0.3, 0.2, 0.3)
+}
+
+func modDistTestHelper(t *testing.T, a, b, n, result float64) {
+	if tmp := ModDist(a, b, n); tmp != result {
+		t.Errorf("ModDist(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
+	}
+}
+func TestModDist(t *testing.T) {
+	// a, b, n
+	modDistTestHelper(t, 0.0, 0.0, 10.0, 0.0)
+	modDistTestHelper(t, 1.0, 1.0, 10.0, 0.0)
+	modDistTestHelper(t, 1.0, 2.0, 10.0, 1.0)
+	modDistTestHelper(t, 2.0, 1.0, 10.0, 1.0)
+	modDistTestHelper(t, 1.0, 9.0, 10.0, 2.0)
+	modDistTestHelper(t, 9.0, 1.0, 10.0, 2.0)
+
+	modDistTestHelper(t, -1.0, 1.0, 10.0, 2.0)
+
+	modDistTestHelper(t, 70.0, 70.0, 10.0, 0.0)
+	modDistTestHelper(t, 71.0, 71.0, 10.0, 0.0)
+	modDistTestHelper(t, 71.0, 72.0, 10.0, 1.0)
+	modDistTestHelper(t, 72.0, 71.0, 10.0, 1.0)
+	modDistTestHelper(t, 71.0, 79.0, 10.0, 2.0)
+	modDistTestHelper(t, 79.0, 71.0, 10.0, 2.0)
+
+	modDistTestHelper(t, -71.0, -71.0, 10.0, 0.0)
+	modDistTestHelper(t, -71.0, -72.0, 10.0, 1.0)
+	modDistTestHelper(t, -72.0, -71.0, 10.0, 1.0)
+	modDistTestHelper(t, -71.0, -79.0, 10.0, 2.0)
+	modDistTestHelper(t, -79.0, -71.0, 10.0, 2.0)
+}
+
+func gammaTestHelper(t *testing.T, x, gamma, result float64) {
+	if tmp := Gamma(x, gamma); tmp != result {
+		t.Errorf("Gamma(%f,%f) = %f, want %f", x, gamma, tmp, result)
+	}
+}
+func TestGamma(t *testing.T) {
+	// x, gamma
+	gammaTestHelper(t, 0.7, 1.0, 0.7)
+	gammaTestHelper(t, 1.0, 0.7, 1.0)
+	gammaTestHelper(t, 1.0, 2.2, 1.0)
+	gammaTestHelper(t, 2.0, 2.0, 4.0)
+	gammaTestHelper(t, 4.0, 0.5, 2.0)
+	gammaTestHelper(t, 0.0, 1.0, 0.0)
+	gammaTestHelper(t, -1.0, 1.0, 0.0)
+}
