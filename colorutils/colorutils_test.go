@@ -9,15 +9,16 @@ func floatToByteTestHelper(t *testing.T, x float64, result byte) {
 }
 func TestFloatToByte(t *testing.T) {
 	// x
+	floatToByteTestHelper(t, -1.0, 0)
 	floatToByteTestHelper(t, 0.0, 0)
 	floatToByteTestHelper(t, 0.001, 0)
-	floatToByteTestHelper(t, 0.999/256, 1)
+	floatToByteTestHelper(t, 0.999/256, 0)
 	floatToByteTestHelper(t, 1.001/256, 1)
-	floatToByteTestHelper(t, 8.499/256, 8)
-	floatToByteTestHelper(t, 8.501/256, 9)
-	floatToByteTestHelper(t, 0.5, 128)
+	floatToByteTestHelper(t, 0.4999, 127)
+	floatToByteTestHelper(t, 0.5001, 128)
+	floatToByteTestHelper(t, 255.001/256, 255)
 	floatToByteTestHelper(t, 1.0, 255)
-	floatToByteTestHelper(t, 0.999, 255)
+	floatToByteTestHelper(t, 2.0, 255)
 }
 
 func remapTestHelper(t *testing.T, x, oldmin, oldmax, newmin, newmax, result float64) {
