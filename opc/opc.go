@@ -41,14 +41,14 @@ func readLocations(fn string) []float64 {
 		z, err = strconv.ParseFloat(coordStrings[2], 64)
 		locations = append(locations, x, y, z)
 	}
-	fmt.Printf("[readLocations] Read %v pixel locations from %s\n", len(locations), fn)
+	fmt.Printf("[opc.readLocations] Read %v pixel locations from %s\n", len(locations), fn)
 	return locations
 }
 
 // Try to connect a couple of times
 // If we fail after several tries, return nil
 func getConnection(ipPort string) net.Conn {
-	fmt.Printf("[getConnection] connecting to %v...\n", ipPort)
+	fmt.Printf("[opc.getConnection] connecting to %v...\n", ipPort)
 	triesLeft := CONNECTION_TRIES
 	var conn net.Conn
 	var err error
@@ -57,14 +57,14 @@ func getConnection(ipPort string) net.Conn {
 		if err == nil {
 			break
 		}
-		fmt.Println("[getConnection", triesLeft, err)
+		fmt.Println("[opc.getConnection", triesLeft, err)
 		time.Sleep(WAIT_BETWEEN_RETRIES * time.Millisecond)
 		triesLeft -= 1
 		if triesLeft == 0 {
 			return nil
 		}
 	}
-	fmt.Println("[getConnection]    connected")
+	fmt.Println("[opc.getConnection]    connected")
 	return conn
 }
 
@@ -101,7 +101,7 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 		_, err = conn.Write(header)
 		if err != nil {
 			// net error -- set conn to nil so we can try to make a new one
-			fmt.Println("[net]", err)
+			fmt.Println("[opc.net]", err)
 			conn = nil
 			sliceIsSent <- 1
 			continue
@@ -111,7 +111,7 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 		_, err = conn.Write(values)
 		if err != nil {
 			// net error -- set conn to nil so we can try to make a new one
-			fmt.Println("[net]", err)
+			fmt.Println("[opc.net]", err)
 			conn = nil
 			sliceIsSent <- 1
 			continue
@@ -155,7 +155,7 @@ func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int,
 		framesSinceLastPrint += 1
 		if t > lastPrintTime+1 {
 			lastPrintTime = t
-			fmt.Printf("[main] %f ms (%d fps)\n", 1000.0/float64(framesSinceLastPrint), framesSinceLastPrint)
+			fmt.Printf("[opc.MainLoop] %f ms (%d fps)\n", 1000.0/float64(framesSinceLastPrint), framesSinceLastPrint)
 			framesSinceLastPrint = 0
 		}
 
