@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// read locations from JSON file into a slice of floats
+// Read locations from JSON file into a slice of floats
 func readLocations(fn string) []float64 {
 	locations := make([]float64, 0)
 	var file *os.File
@@ -40,12 +40,11 @@ func readLocations(fn string) []float64 {
 	return locations
 }
 
-// Connect to an ip:port and send the values array with an OPC header in front of it.
-func connectAndSend(networkWantsMore chan int, sendThisSlice chan []byte, ipPort string) {
-	// try to connect until we succeed
-	// if we fail after several tries, just return
+// Try to connect a couple of times
+// If we fail after several tries, return nil
+func getConnection(ipPort string) net.Conn {
 	fmt.Printf("connecting to %v...\n", ipPort)
-	triesLeft := 5
+	triesLeft := 1
 	var conn net.Conn
 	var err error
 	for {
@@ -57,18 +56,37 @@ func connectAndSend(networkWantsMore chan int, sendThisSlice chan []byte, ipPort
 		time.Sleep(1 * time.Millisecond)
 		triesLeft -= 1
 		if triesLeft == 0 {
-			return
+			return nil
 		}
 	}
-	defer conn.Close()
 	fmt.Println("    connected")
+	return conn
+}
+
+// Connect to an ip:port and send the values array with an OPC header in front of it.
+func networkThread(networkWantsMore chan int, sendThisSlice chan []byte, ipPort string) {
+	var conn net.Conn
+	var err error
 
 	// loop forever, getting slices to send
 	for {
 		// indicate we're idle
 		networkWantsMore <- 1
+
 		// wait to get a slice to send
 		values := <-sendThisSlice
+
+		// if the connection has gone bad, make a new one
+		if conn == nil {
+			conn = getConnection(ipPort)
+		}
+		// if that didn't work, wait a second and restart the loop
+		if conn == nil {
+			time.Sleep(1000 * time.Millisecond)
+			continue
+		}
+
+		// ok, connection is good
 
 		// make and send header
 		channel := byte(0)
@@ -78,14 +96,19 @@ func connectAndSend(networkWantsMore chan int, sendThisSlice chan []byte, ipPort
 		header := []byte{channel, command, lenHighByte, lenLowByte}
 		_, err = conn.Write(header)
 		if err != nil {
+			// net error -- set conn to nil so we can try to make a new one
 			fmt.Println(err)
+			conn = nil
 			continue
 		}
 
-		// send pixels
+		// send actual pixel values
 		_, err = conn.Write(values)
 		if err != nil {
+			// net error -- set conn to nil so we can try to make a new one
 			fmt.Println(err)
+			conn = nil
+			continue
 		}
 	}
 }
@@ -104,10 +127,10 @@ func main() {
 
 	writing, sending := 0, 1
 
-	networkWantsMore := make(chan int,0)
-	sendThisSlice := make(chan []byte,0)
+	networkWantsMore := make(chan int, 0)
+	sendThisSlice := make(chan []byte, 0)
 
-	go connectAndSend(networkWantsMore, sendThisSlice, ipPort)
+	go networkThread(networkWantsMore, sendThisSlice, ipPort)
 
 	// fill in values over and over
 	var pct, r, g, b, t float64
@@ -117,12 +140,14 @@ func main() {
 	t = start_time
 	for t < start_time+5 {
 		t = float64(time.Now().UnixNano()) / 1.0e9
+		// fps bookkeeping
 		frames += 1
 		if t > last_print+1 {
 			last_print = t
 			fmt.Printf("%f ms (%d fps)\n", 1000.0/float64(frames), frames)
 			frames = 0
 		}
+		// fill in values array
 		for ii := 0; ii < N_PIXELS; ii++ {
 			pct = float64(ii) / float64(N_PIXELS)
 
@@ -141,9 +166,6 @@ func main() {
 		writing, sending = sending, writing
 		// tell the network to start sending the one we just finished making
 		sendThisSlice <- VALUES[sending]
-
-		//for ii, v := range VALUES {
-		//    fmt.Printf("VALUES[%d] = %d\n", ii, v)
-		//}
+		// and now we can start writing to the other one
 	}
 }
