@@ -3,6 +3,7 @@ package opc
 import (
 	"bufio"
 	"fmt"
+	"github.com/davecheney/profile"
 	"math"
 	"net"
 	"os"
@@ -16,6 +17,59 @@ const CONNECTION_TRIES = 1
 // times in ms
 const WAIT_TO_RETRY = 1000
 const WAIT_BETWEEN_RETRIES = 1
+
+func helpAndQuit() {
+	fmt.Println("")
+	fmt.Println("Usage:  program-name  <layout.json>  [ip:port  [fps  [seconds-to-run]]]")
+	fmt.Println("")
+	fmt.Println("    layout.json       A layout json file")
+	fmt.Println("    ip:port           Server to connect to.  Port is optional and defaults to 7890.")
+	fmt.Println("                        You can use a hostname instead of an ip address.")
+	fmt.Println("    fps               Desired frames per second.  User 0 for no limit.")
+	fmt.Println("    seconds-to-run    Quit after this many seconds.  Use 0 for forever.")
+	fmt.Println("                        If nonzero, the profiler will be turned on.")
+	fmt.Println("                        Use negative numbers to benchmark your pixelThread function.")
+	fmt.Println("")
+	fmt.Println("--------------------------------------------------------------------------------/")
+	os.Exit(0)
+}
+
+func ParseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
+	layoutPath = "layouts/freespace.json"
+	ipPort = "127.0.0.1:7890"
+	fps = 40
+	timeToRun = 0
+	var err error
+
+	if len(os.Args) >= 2 {
+		if os.Args[1] == "-h" || os.Args[1] == "--help" {
+			helpAndQuit()
+		}
+		layoutPath = os.Args[1]
+	}
+	if len(os.Args) >= 3 {
+		ipPort = os.Args[2]
+		if !strings.Contains(ipPort, ":") {
+			ipPort += ":7890"
+		}
+	}
+	if len(os.Args) >= 4 {
+		fps, err = strconv.ParseFloat(os.Args[3], 64)
+		if err != nil {
+			helpAndQuit()
+		}
+	}
+	if len(os.Args) >= 5 {
+		timeToRun, err = strconv.ParseFloat(os.Args[4], 64)
+		if err != nil {
+			helpAndQuit()
+		}
+	}
+	if len(os.Args) >= 6 || len(os.Args) <= 1 {
+		helpAndQuit()
+	}
+	return
+}
 
 // Read locations from JSON file into a slice of floats
 func readLocations(fn string) []float64 {
@@ -125,7 +179,24 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 // Run until timeToRun seconds have passed
 // Set timeToRun to 0 to run forever
 // Set timeToRun to a negative to benchmark your pixelThread function by itself.
-func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int, []float64), timeToRun float64) {
+// Set fps to the number of frames per second you want, or 0 for unlimited.
+func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ipPort string, fps float64, timeToRun float64) {
+	fmt.Println("--------------------------------------------------------------------------------\\")
+	defer fmt.Println("--------------------------------------------------------------------------------/")
+
+	if timeToRun != 0 {
+		if timeToRun > 0 {
+			fmt.Printf("[opc.MainLoop] Running for %f seconds with profiling turned on, pixels and network\n", timeToRun)
+		} else if timeToRun < 0 {
+			fmt.Printf("[opc.MainLoop] Running for %f seconds with profiling turned on, pixels only\n", -timeToRun)
+		}
+		defer profile.Start(profile.CPUProfile).Stop()
+	} else {
+		fmt.Println("[opc.MainLoop] Running forever")
+	}
+
+	frame_budget_ms := 1000.0 / fps
+
 	// load location and build initial slices
 	locations := readLocations(layoutPath)
 	n_pixels := len(locations) / 3
@@ -148,7 +219,7 @@ func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int,
 	startTime := float64(time.Now().UnixNano()) / 1.0e9
 	lastPrintTime := startTime
 	framesSinceLastPrint := int(0)
-	var t float64
+	var t, t2 float64
 	for {
 		// fps reporting and bookkeeping
 		t = float64(time.Now().UnixNano()) / 1.0e9
@@ -174,6 +245,16 @@ func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int,
 		<-sliceIsFilled
 		if timeToRun >= 0 {
 			<-sliceIsSent
+		}
+
+		// control framerate
+		if timeToRun >= 0 && fps > 0 {
+			// sleep if we still have frame budget left
+			t2 = float64(time.Now().UnixNano()) / 1.0e9
+			timeRemaining := float64(frame_budget_ms)/1000 - (t2 - t)
+			if timeRemaining > 0 {
+				time.Sleep(time.Duration(timeRemaining*1000*1000) * time.Microsecond)
+			}
 		}
 
 		// swap

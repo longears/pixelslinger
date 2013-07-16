@@ -9,13 +9,9 @@ package main
 import (
 	"bitbucket.org/davidwallace/go-tower/colorutils"
 	"bitbucket.org/davidwallace/go-tower/opc"
-	"github.com/davecheney/profile"
 	"math"
 	"time"
 )
-
-// times in ms
-const PIXEL_SLEEP_PER_FRAME = 10
 
 func saveToSlice(slice []byte, ii int, r, g, b float64) {
 	slice[ii*3+0] = colorutils.FloatToByte(r)
@@ -41,11 +37,10 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 		// wait for slice to fill
 		values := <-fillThisSlice
 		n_pixels := len(values) / 3
-
 		t := float64(time.Now().UnixNano()) / 1.0e9
-
 		// fill in values array
 		for ii := 0; ii < n_pixels; ii++ {
+			//--------------------------------------------------------------------------------
 			pct := float64(ii) / float64(n_pixels)
 
 			// diagonal black stripes
@@ -60,20 +55,14 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 			b := blackstripes * colorutils.Remap(math.Cos((t/speed_b+pct*freq_b)*math.Pi*2), -1, 1, 0, 1)
 
 			saveToSlice(values, ii, r, g, b)
-		}
 
-		// done
-		time.Sleep(PIXEL_SLEEP_PER_FRAME * time.Millisecond)
+			//--------------------------------------------------------------------------------
+		}
 		sliceIsFilled <- 1
 	}
 }
 
 func main() {
-	defer profile.Start(profile.CPUProfile).Stop()
-
-	layoutPath := "layouts/freespace.json"
-	//ipPort := "127.0.0.1:7890"
-	ipPort := "192.168.11.11:7890"
-
-	opc.MainLoop(layoutPath, ipPort, pixelThread, 0)
+	layoutPath, ipPort, fps, timeToRun := opc.ParseFlags()
+	opc.MainLoop(pixelThread, layoutPath, ipPort, fps, timeToRun)
 }
