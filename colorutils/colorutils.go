@@ -2,7 +2,7 @@ package colorutils
 
 import "math"
 
-const TABLE_SIZE = 1024
+const TABLE_SIZE = 2048
 var COS_LOOKUP = make([]float64, TABLE_SIZE)
 
 func init() {

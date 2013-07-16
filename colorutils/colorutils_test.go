@@ -126,13 +126,23 @@ func TestCos(t *testing.T) {
 	cosTestHelper(t, 1.0, 0.0, 1.0, 4.0, 5.0, 5.0)
 }
 func BenchmarkCos(b *testing.B) {
+    var x float64 = 0
 	for i := 0; i < b.N; i++ {
-		Cos(0.0, 0.0, 1.0, 0.0, 1.0)
+        x += 0.1028
+        if x > 1000 {
+            x = 0
+        }
+		Cos(x, 0.0, 1.0, 0.0, 1.0)
 	}
 }
 func BenchmarkCos2(b *testing.B) {
+    var x float64 = 0
 	for i := 0; i < b.N; i++ {
-		Cos2(0.0, 0.0, 1.0, 0.0, 1.0)
+        x += 0.1028
+        if x > 1000 {
+            x = 0
+        }
+		Cos2(x, 0.0, 1.0, 0.0, 1.0)
 	}
 }
 
