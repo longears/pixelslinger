@@ -1,6 +1,28 @@
 package colorutils
 
 import "testing"
+import "math"
+
+func TestCosTable(t *testing.T) {
+    var correct, approx, diff float64
+    for x := -30.0; x < 30; x += 0.1387 {
+        correct = math.Cos(x)
+        approx = CosTable(x)
+        diff = math.Abs(correct - approx)
+        if diff > 0.1 {
+            t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
+        }
+    }
+    var bigOffset float64 = 1373963358.2 * 2 * 3.14159
+    for x := bigOffset-30; x < bigOffset+30; x += 0.1387 {
+        correct = math.Cos(x)
+        approx = CosTable(x)
+        diff = math.Abs(correct - approx)
+        if diff > 0.1 {
+            t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
+        }
+    }
+}
 
 func floatToByteTestHelper(t *testing.T, x float64, result byte) {
 	if tmp := FloatToByte(x); tmp != result {
@@ -106,6 +128,11 @@ func TestCos(t *testing.T) {
 func BenchmarkCos(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Cos(0.0, 0.0, 1.0, 0.0, 1.0)
+	}
+}
+func BenchmarkCos2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Cos2(0.0, 0.0, 1.0, 0.0, 1.0)
 	}
 }
 

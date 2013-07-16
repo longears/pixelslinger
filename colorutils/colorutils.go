@@ -2,6 +2,27 @@ package colorutils
 
 import "math"
 
+const TABLE_SIZE = 1024
+var COS_LOOKUP = make([]float64, TABLE_SIZE)
+
+func init() {
+    // build cos lookup table
+    for ii := 0; ii < TABLE_SIZE; ii++ {
+        x := float64(ii) / float64(TABLE_SIZE) * (math.Pi*2)
+        COS_LOOKUP[ii] = math.Cos(x)
+    }
+}
+
+func CosTable(x float64) float64 {
+    pct := x / (math.Pi*2)
+    ii := int64(pct * TABLE_SIZE + 0.5)
+    ii = ii % TABLE_SIZE
+    if ii < 0 {
+        ii += TABLE_SIZE
+    }
+    return COS_LOOKUP[ii]
+}
+
 // Given a float in the range 0-1, return a byte from 0 to 255.
 func FloatToByte(x float64) byte {
 	if x >= 1 {
@@ -47,6 +68,10 @@ func Clamp(x, minn, maxx float64) float64 {
 //minn, maxx: the output range
 func Cos(x, offset, period, minn, maxx float64) float64 {
 	var value = math.Cos((x/period-offset)*math.Pi*2)/2 + 0.5
+	return value*(maxx-minn) + minn
+}
+func Cos2(x, offset, period, minn, maxx float64) float64 {
+	var value = CosTable((x/period-offset)*math.Pi*2)/2 + 0.5
 	return value*(maxx-minn) + minn
 }
 
