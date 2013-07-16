@@ -64,8 +64,6 @@ func RGBContrast(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 floa
 	return
 }
 
-// TODO: RGBContrast
-
 // If x is less than threshold, return 0.  Otherwise, return x.
 func ClipBlack(x, threshold float64) float64 {
 	if x < threshold {
@@ -112,5 +110,3 @@ func RGBGamma(r, g, b, gamma float64) (float64, float64, float64) {
 	}
 	return r, g, b
 }
-
-// TODO: RGBGamma
