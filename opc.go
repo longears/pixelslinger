@@ -1,17 +1,54 @@
 package main
 
-import "fmt"
-import "time"
-import "bitbucket.org/davidwallace/go-opc/colorutils"
-import "github.com/davecheney/profile"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+	"github.com/davecheney/profile"
+	"bitbucket.org/davidwallace/go-opc/colorutils"
+)
+
+// read locations from JSON file into a slice of floats
+func readLocations(fn string) []float64 {
+	locations := make([]float64, 0)
+	var file *os.File
+	var err error
+	if file, err = os.Open(fn); err != nil {
+		panic(fmt.Sprintf("could not open layout file: %s", fn))
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) == 0 || line[0] == '[' || line[0] == ']' {
+			continue
+		}
+		line = strings.Split(line, "[")[1]
+		line = strings.Split(line, "]")[0]
+		coordStrings := strings.Split(line, ", ")
+		var x, y, z float64
+		x, err = strconv.ParseFloat(coordStrings[0], 64)
+		y, err = strconv.ParseFloat(coordStrings[1], 64)
+		z, err = strconv.ParseFloat(coordStrings[2], 64)
+		locations = append(locations, x, y, z)
+	}
+	fmt.Printf("Read %v pixel locations from %s\n", len(locations), fn)
+	return locations
+}
 
 func main() {
-
 	defer profile.Start(profile.CPUProfile).Stop()
 
-	const N_PIXELS = 1000
-	var array = make([]byte, N_PIXELS*3)
+	path := "circle.json"
 
+	LOCATIONS := readLocations(path)
+	N_PIXELS := len(LOCATIONS) / 3
+	VALUES := make([]byte, N_PIXELS*3)
+
+	// fill in values over and over
 	var pct, r, g, b, t float64
 	var last_print = float64(time.Now().UnixNano()) / 1.0e9
 	var frames = 0
@@ -26,19 +63,19 @@ func main() {
 			frames = 0
 		}
 		for ii := 0; ii < N_PIXELS; ii++ {
-			pct = float64(ii) / N_PIXELS
+			pct = float64(ii) / float64(N_PIXELS)
 
 			r = pct
 			g = pct
 			b = pct
 
-			array[ii*3+0] = colorutils.FloatToByte(r)
-			array[ii*3+1] = colorutils.FloatToByte(g)
-			array[ii*3+2] = colorutils.FloatToByte(b)
+			VALUES[ii*3+0] = colorutils.FloatToByte(r)
+			VALUES[ii*3+1] = colorutils.FloatToByte(g)
+			VALUES[ii*3+2] = colorutils.FloatToByte(b)
 		}
 
-		//for ii, v := range array {
-		//    fmt.Printf("array[%d] = %d\n", ii, v)
+		//for ii, v := range VALUES {
+		//    fmt.Printf("VALUES[%d] = %d\n", ii, v)
 		//}
 	}
 
