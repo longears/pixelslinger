@@ -1,11 +1,8 @@
-package main
+package opc
 
 import (
-	"bitbucket.org/davidwallace/go-opc/colorutils"
 	"bufio"
 	"fmt"
-	"github.com/davecheney/profile"
-	"math"
 	"net"
 	"os"
 	"strconv"
@@ -18,7 +15,6 @@ const CONNECTION_TRIES = 1
 // times in ms
 const WAIT_TO_RETRY = 1000
 const WAIT_BETWEEN_RETRIES = 1
-const PIXEL_SLEEP_PER_FRAME = 1
 
 // Read locations from JSON file into a slice of floats
 func readLocations(fn string) []float64 {
@@ -71,12 +67,13 @@ func getConnection(ipPort string) net.Conn {
 	return conn
 }
 
-// Connect to an ip:port and send the values array with an OPC header in front of it.
+// Initiate and Maintain a connection to ipPort.
+// When a slice comes in through sendThisSlice, send it with an OPC header.
+// Loop forever.
 func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
 	var conn net.Conn
 	var err error
 
-	// loop forever, getting slices to send
 	for {
 		// wait to get a slice to send
 		values := <-sendThisSlice
@@ -92,9 +89,9 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 			continue
 		}
 
-		// ok, connection is good
+		// ok, at this point the connection is good
 
-		// make and send header
+		// make and send OPC header
 		channel := byte(0)
 		command := byte(0)
 		lenLowByte := byte(len(values) % 256)
@@ -122,72 +119,17 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 	}
 }
 
-func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int) {
-	var (
-		// how many sine wave cycles are squeezed into our n_pixels
-		// 24 happens to create nice diagonal stripes on the wall layout
-		freq_r float64 = 24
-		freq_g float64 = 24
-		freq_b float64 = 24
-
-		// how many seconds the color sine waves take to shift through a complete cycle
-		speed_r float64 = 7
-		speed_g float64 = -13
-		speed_b float64 = 19
-	)
-
-	for {
-		// wait for slice to fill
-		values := <-fillThisSlice
-		n_pixels := len(values) / 3
-
-		t := float64(time.Now().UnixNano()) / 1.0e9
-
-		// fill in values array
-		for ii := 0; ii < n_pixels; ii++ {
-			pct := float64(ii) / float64(n_pixels)
-
-			// diagonal black stripes
-			pct_jittered := math.Mod((pct*77)+37, 37)
-			blackstripes := colorutils.Cos(pct_jittered, t*0.05, 1, -1.5, 1.5) // offset, period, minn, maxx
-			blackstripes_offset := colorutils.Cos(t, 0.9, 60, -0.5, 3)
-			blackstripes = colorutils.Clamp(blackstripes+blackstripes_offset, 0, 1)
-
-			// 3 sine waves for r, g, b which are out of sync with each other
-			r := blackstripes * colorutils.Remap(math.Cos((t/speed_r+pct*freq_r)*math.Pi*2), -1, 1, 0, 1)
-			g := blackstripes * colorutils.Remap(math.Cos((t/speed_g+pct*freq_g)*math.Pi*2), -1, 1, 0, 1)
-			b := blackstripes * colorutils.Remap(math.Cos((t/speed_b+pct*freq_b)*math.Pi*2), -1, 1, 0, 1)
-
-			//values[ii*3+0] = colorutils.FloatToByte(r)
-			//values[ii*3+1] = colorutils.FloatToByte(g)
-			//values[ii*3+2] = colorutils.FloatToByte(b)
-			saveToSlice(values, ii, r, g, b)
-		}
-
-		// done
-		time.Sleep(PIXEL_SLEEP_PER_FRAME * time.Millisecond)
-		sliceIsFilled <- 1
-	}
-}
-
-func saveToSlice(slice []byte, ii int, r, g, b float64) {
-	slice[ii*3+0] = colorutils.FloatToByte(r)
-	slice[ii*3+1] = colorutils.FloatToByte(g)
-	slice[ii*3+2] = colorutils.FloatToByte(b)
-}
-
-func main() {
-	defer profile.Start(profile.CPUProfile).Stop()
-
-	path := "layouts/freespace.json"
-	ipPort := "127.0.0.1:7890"
-	//ipPort := "192.168.11.11:7890"
-
-	LOCATIONS := readLocations(path)
-	N_PIXELS := len(LOCATIONS) / 3
-	VALUES := make([][]byte, 2)
-	VALUES[0] = make([]byte, N_PIXELS*3)
-	VALUES[1] = make([]byte, N_PIXELS*3)
+// Launch the pixelThread and suck pixels out of it
+// Also launch the networkThread and feed the pixels to it
+// Run until timeToRun seconds have passed
+// Set timeToRun to -1 to run forever
+func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int), timeToRun float64) {
+	// load location and build initial slices
+	locations := readLocations(layoutPath)
+	n_pixels := len(locations) / 3
+	values := make([][]byte, 2)
+	values[0] = make([]byte, n_pixels*3)
+	values[1] = make([]byte, n_pixels*3)
 
 	filling, sending := 0, 1
 
@@ -206,7 +148,7 @@ func main() {
 	framesSinceLastPrint := int(0)
 	var t float64
 	for {
-		// fps bookkeeping
+		// fps reporting and bookkeeping
 		t = float64(time.Now().UnixNano()) / 1.0e9
 		framesSinceLastPrint += 1
 		if t > lastPrintTime+1 {
@@ -215,14 +157,14 @@ func main() {
 			framesSinceLastPrint = 0
 		}
 
-        // quit after 10 seconds, for profiling purposes
-		if t > startTime+10 {
+		// quit after a while, for profiling purposes
+		if timeToRun > 0 && t > startTime+timeToRun {
 			return
 		}
 
 		// start filling and sending
-		fillThisSlice <- VALUES[filling]
-		sendThisSlice <- VALUES[sending]
+		fillThisSlice <- values[filling]
+		sendThisSlice <- values[sending]
 
 		// wait until both are ready
 		<-sliceIsFilled
