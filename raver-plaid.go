@@ -15,7 +15,7 @@ import (
 )
 
 // times in ms
-const PIXEL_SLEEP_PER_FRAME = 1
+const PIXEL_SLEEP_PER_FRAME = 10
 
 func saveToSlice(slice []byte, ii int, r, g, b float64) {
 	slice[ii*3+0] = colorutils.FloatToByte(r)
@@ -23,7 +23,7 @@ func saveToSlice(slice []byte, ii int, r, g, b float64) {
 	slice[ii*3+2] = colorutils.FloatToByte(b)
 }
 
-func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int) {
+func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []float64) {
 	var (
 		// how many sine wave cycles are squeezed into our n_pixels
 		// 24 happens to create nice diagonal stripes on the wall layout
@@ -72,8 +72,8 @@ func main() {
 	defer profile.Start(profile.CPUProfile).Stop()
 
 	layoutPath := "layouts/freespace.json"
-	ipPort := "127.0.0.1:7890"
-	//ipPort := "192.168.11.11:7890"
+	//ipPort := "127.0.0.1:7890"
+	ipPort := "192.168.11.11:7890"
 
 	opc.MainLoop(layoutPath, ipPort, pixelThread, -1)
 }

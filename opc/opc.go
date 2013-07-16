@@ -123,7 +123,7 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 // Also launch the networkThread and feed the pixels to it
 // Run until timeToRun seconds have passed
 // Set timeToRun to -1 to run forever
-func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int), timeToRun float64) {
+func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int, []float64), timeToRun float64) {
 	// load location and build initial slices
 	locations := readLocations(layoutPath)
 	n_pixels := len(locations) / 3
@@ -140,7 +140,7 @@ func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int)
 
 	// start threads
 	go networkThread(sendThisSlice, sliceIsSent, ipPort)
-	go pixelThread(fillThisSlice, sliceIsFilled)
+	go pixelThread(fillThisSlice, sliceIsFilled, locations)
 
 	// main loop
 	startTime := float64(time.Now().UnixNano()) / 1.0e9
