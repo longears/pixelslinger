@@ -4,24 +4,24 @@ import "testing"
 import "math"
 
 func TestCosTable(t *testing.T) {
-    var correct, approx, diff float64
-    for x := -30.0; x < 30; x += 0.1387 {
-        correct = math.Cos(x)
-        approx = CosTable(x)
-        diff = math.Abs(correct - approx)
-        if diff > 0.1 {
-            t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
-        }
-    }
-    var bigOffset float64 = 1373963358.2 * 2 * 3.14159
-    for x := bigOffset-30; x < bigOffset+30; x += 0.1387 {
-        correct = math.Cos(x)
-        approx = CosTable(x)
-        diff = math.Abs(correct - approx)
-        if diff > 0.1 {
-            t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
-        }
-    }
+	var correct, approx, diff float64
+	for x := -30.0; x < 30; x += 0.1387 {
+		correct = math.Cos(x)
+		approx = CosTable(x)
+		diff = math.Abs(correct - approx)
+		if diff > 0.1 {
+			t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
+		}
+	}
+	var bigOffset float64 = 1373963358.2 * 2 * 3.14159
+	for x := bigOffset - 30; x < bigOffset+30; x += 0.1387 {
+		correct = math.Cos(x)
+		approx = CosTable(x)
+		diff = math.Abs(correct - approx)
+		if diff > 0.1 {
+			t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
+		}
+	}
 }
 
 func floatToByteTestHelper(t *testing.T, x float64, result byte) {
@@ -126,22 +126,22 @@ func TestCos(t *testing.T) {
 	cosTestHelper(t, 1.0, 0.0, 1.0, 4.0, 5.0, 5.0)
 }
 func BenchmarkCos(b *testing.B) {
-    var x float64 = 0
+	var x float64 = 0
 	for i := 0; i < b.N; i++ {
-        x += 0.1028
-        if x > 1000 {
-            x = 0
-        }
+		x += 0.1028
+		if x > 1000 {
+			x = 0
+		}
 		Cos(x, 0.0, 1.0, 0.0, 1.0)
 	}
 }
 func BenchmarkCos2(b *testing.B) {
-    var x float64 = 0
+	var x float64 = 0
 	for i := 0; i < b.N; i++ {
-        x += 0.1028
-        if x > 1000 {
-            x = 0
-        }
+		x += 0.1028
+		if x > 1000 {
+			x = 0
+		}
 		Cos2(x, 0.0, 1.0, 0.0, 1.0)
 	}
 }
@@ -226,6 +226,41 @@ func TestModDist(t *testing.T) {
 func BenchmarkModDist(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ModDist(1.0, 2.0, 10.0)
+	}
+}
+
+func modDist2TestHelper(t *testing.T, a, b, n, result float64) {
+	if tmp := ModDist2(a, b, n); math.Abs(tmp-result) > 0.001 {
+		t.Errorf("ModDist2(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
+	}
+}
+func TestModDist2(t *testing.T) {
+	// a, b, n
+	modDist2TestHelper(t, 0.0, 0.0, 10.0, 0.0)
+	modDist2TestHelper(t, 1.0, 1.0, 10.0, 0.0)
+	modDist2TestHelper(t, 1.0, 2.0, 10.0, 1.0)
+	modDist2TestHelper(t, 2.0, 1.0, 10.0, 1.0)
+	modDist2TestHelper(t, 1.0, 9.0, 10.0, 2.0)
+	modDist2TestHelper(t, 9.0, 1.0, 10.0, 2.0)
+
+	modDist2TestHelper(t, -1.0, 1.0, 10.0, 2.0)
+
+	modDist2TestHelper(t, 70.0, 70.0, 10.0, 0.0)
+	modDist2TestHelper(t, 71.0, 71.0, 10.0, 0.0)
+	modDist2TestHelper(t, 71.0, 72.0, 10.0, 1.0)
+	modDist2TestHelper(t, 72.0, 71.0, 10.0, 1.0)
+	modDist2TestHelper(t, 71.0, 79.0, 10.0, 2.0)
+	modDist2TestHelper(t, 79.0, 71.0, 10.0, 2.0)
+
+	modDist2TestHelper(t, -71.0, -71.0, 10.0, 0.0)
+	modDist2TestHelper(t, -71.0, -72.0, 10.0, 1.0)
+	modDist2TestHelper(t, -72.0, -71.0, 10.0, 1.0)
+	modDist2TestHelper(t, -71.0, -79.0, 10.0, 2.0)
+	modDist2TestHelper(t, -79.0, -71.0, 10.0, 2.0)
+}
+func BenchmarkModDist2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ModDist2(1.0, 2.0, 10.0)
 	}
 }
 

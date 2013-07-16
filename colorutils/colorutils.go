@@ -3,24 +3,32 @@ package colorutils
 import "math"
 
 const TABLE_SIZE = 2048
+
 var COS_LOOKUP = make([]float64, TABLE_SIZE)
 
 func init() {
-    // build cos lookup table
-    for ii := 0; ii < TABLE_SIZE; ii++ {
-        x := float64(ii) / float64(TABLE_SIZE) * (math.Pi*2)
-        COS_LOOKUP[ii] = math.Cos(x)
-    }
+	// build cos lookup table
+	for ii := 0; ii < TABLE_SIZE; ii++ {
+		x := float64(ii) / float64(TABLE_SIZE) * (math.Pi * 2)
+		COS_LOOKUP[ii] = math.Cos(x)
+	}
 }
 
 func CosTable(x float64) float64 {
-    pct := x / (math.Pi*2)
-    ii := int64(pct * TABLE_SIZE + 0.5)
-    ii = ii % TABLE_SIZE
-    if ii < 0 {
-        ii += TABLE_SIZE
-    }
-    return COS_LOOKUP[ii]
+	pct := x / (math.Pi * 2)
+	ii := int64(pct*TABLE_SIZE + 0.5)
+	ii = ii % TABLE_SIZE
+	if ii < 0 {
+		ii += TABLE_SIZE
+	}
+	return COS_LOOKUP[ii]
+}
+
+// Faster version of math.Mod(a,b) based on math.Modf
+// Slightly less accurate, especially if b is very large or small
+func Mod2(a, b float64) float64 {
+	_, f := math.Modf(a / b)
+	return f * b
 }
 
 // Given a float in the range 0-1, return a byte from 0 to 255.
@@ -107,6 +115,9 @@ func ClipBlack(x, threshold float64) float64 {
 //mod_dist(11, 1, 12) == 2 because you can "wrap around".
 func ModDist(a, b, n float64) float64 {
 	return math.Min(math.Mod(a-b+n, n), math.Mod(b-a+n, n))
+}
+func ModDist2(a, b, n float64) float64 {
+	return math.Min(Mod2(a-b+n, n), Mod2(b-a+n, n))
 }
 
 // Apply a gamma exponent to x.  If x is negative, use 0 intead.

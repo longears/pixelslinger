@@ -15,7 +15,7 @@ import (
 )
 
 // times in ms
-const PIXEL_SLEEP_PER_FRAME = 10
+const PIXEL_SLEEP_PER_FRAME = 1
 
 func saveToSlice(slice []byte, ii int, r, g, b float64) {
 	slice[ii*3+0] = colorutils.FloatToByte(r)
@@ -74,5 +74,5 @@ func main() {
 	//ipPort := "127.0.0.1:7890"
 	ipPort := "192.168.11.11:7890"
 
-	opc.MainLoop(layoutPath, ipPort, pixelThread, -1)
+	opc.MainLoop(layoutPath, ipPort, pixelThread, 0)
 }

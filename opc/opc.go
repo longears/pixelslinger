@@ -3,6 +3,7 @@ package opc
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -122,7 +123,8 @@ func networkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 // Launch the pixelThread and suck pixels out of it
 // Also launch the networkThread and feed the pixels to it
 // Run until timeToRun seconds have passed
-// Set timeToRun to -1 to run forever
+// Set timeToRun to 0 to run forever
+// Set timeToRun to a negative to benchmark your pixelThread function by itself.
 func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int, []float64), timeToRun float64) {
 	// load location and build initial slices
 	locations := readLocations(layoutPath)
@@ -158,17 +160,21 @@ func MainLoop(layoutPath, ipPort string, pixelThread func(chan []byte, chan int,
 		}
 
 		// quit after a while, for profiling purposes
-		if timeToRun > 0 && t > startTime+timeToRun {
+		if timeToRun != 0 && t > startTime+math.Abs(timeToRun) {
 			return
 		}
 
 		// start filling and sending
 		fillThisSlice <- values[filling]
-		sendThisSlice <- values[sending]
+		if timeToRun >= 0 {
+			sendThisSlice <- values[sending]
+		}
 
 		// wait until both are ready
 		<-sliceIsFilled
-		<-sliceIsSent
+		if timeToRun >= 0 {
+			<-sliceIsSent
+		}
 
 		// swap
 		filling, sending = sending, filling

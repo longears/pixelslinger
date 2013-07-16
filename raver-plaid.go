@@ -75,5 +75,5 @@ func main() {
 	//ipPort := "127.0.0.1:7890"
 	ipPort := "192.168.11.11:7890"
 
-	opc.MainLoop(layoutPath, ipPort, pixelThread, -1)
+	opc.MainLoop(layoutPath, ipPort, pixelThread, 0)
 }
