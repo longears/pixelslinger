@@ -3,6 +3,7 @@ package colorutils
 import "testing"
 import "math"
 
+//================================================================================
 func TestCosTable(t *testing.T) {
 	var correct, approx, diff float64
 	for x := -30.0; x < 30; x += 0.1387 {
@@ -24,6 +25,57 @@ func TestCosTable(t *testing.T) {
 	}
 }
 
+//================================================================================
+func posModTestHelper(t *testing.T, a, b, result float64) {
+	if tmp := PosMod(a, b); tmp != result {
+		t.Errorf("PosMod(%f,%f) = %f, want %f", a, b, tmp, result)
+	}
+}
+func TestPosMod(t *testing.T) {
+	posModTestHelper(t, -11, 10, 9)
+	posModTestHelper(t, -10, 10, 0)
+	posModTestHelper(t, -9, 10, 1)
+
+	posModTestHelper(t, -1, 10, 9)
+	posModTestHelper(t, 0, 10, 0)
+	posModTestHelper(t, 1, 10, 1)
+
+	posModTestHelper(t, 9, 10, 9)
+	posModTestHelper(t, 10, 10, 0)
+	posModTestHelper(t, 11, 10, 1)
+}
+func BenchmarkPosMod(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		PosMod(1431.4,104.5)
+	}
+}
+
+//================================================================================
+func posMod2TestHelper(t *testing.T, a, b, result float64) {
+	if tmp := PosMod2(a, b); math.Abs(tmp-result) > 0.001 {
+		t.Errorf("PosMod2(%f,%f) = %f, want %f", a, b, tmp, result)
+	}
+}
+func TestPosMod2(t *testing.T) {
+	posMod2TestHelper(t, -11, 10, 9)
+	posMod2TestHelper(t, -10, 10, 0)
+	posMod2TestHelper(t, -9, 10, 1)
+
+	posMod2TestHelper(t, -1, 10, 9)
+	posMod2TestHelper(t, 0, 10, 0)
+	posMod2TestHelper(t, 1, 10, 1)
+
+	posMod2TestHelper(t, 9, 10, 9)
+	posMod2TestHelper(t, 10, 10, 0)
+	posMod2TestHelper(t, 11, 10, 1)
+}
+func BenchmarkPosMod2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		PosMod2(1431.4,104.5)
+	}
+}
+
+//================================================================================
 func floatToByteTestHelper(t *testing.T, x float64, result byte) {
 	if tmp := FloatToByte(x); tmp != result {
 		t.Errorf("FloatToByte(%f) = %d, want %d", x, tmp, result)
@@ -48,6 +100,7 @@ func BenchmarkFloatToByte(b *testing.B) {
 	}
 }
 
+//================================================================================
 func remapTestHelper(t *testing.T, x, oldmin, oldmax, newmin, newmax, result float64) {
 	if tmp := Remap(x, oldmin, oldmax, newmin, newmax); tmp != result {
 		t.Errorf("Remap(%f,%f,%f,%f,%f) = %f, want %f", x, oldmin, oldmax, newmin, newmax, tmp, result)
@@ -86,6 +139,7 @@ func BenchmarkRemap(b *testing.B) {
 	}
 }
 
+//================================================================================
 func clampTestHelper(t *testing.T, x, minn, maxx, result float64) {
 	if tmp := Clamp(x, minn, maxx); tmp != result {
 		t.Errorf("Clamp(%f,%f,%f) = %f, want %f", x, minn, maxx, tmp, result)
@@ -105,6 +159,7 @@ func BenchmarkClamp(b *testing.B) {
 	}
 }
 
+//================================================================================
 func cosTestHelper(t *testing.T, x, offset, period, minn, maxx, result float64) {
 	if tmp := Cos(x, offset, period, minn, maxx); tmp != result {
 		t.Errorf("Cos(%f,%f,%f,%f,%f) = %f, want %f", x, offset, period, minn, maxx, tmp, result)
@@ -146,6 +201,7 @@ func BenchmarkCos2(b *testing.B) {
 	}
 }
 
+//================================================================================
 func contrastTestHelper(t *testing.T, x, center, mult, result float64) {
 	if tmp := Contrast(x, center, mult); tmp != result {
 		t.Errorf("Contrast(%f,%f,%f) = %f, want %f", x, center, mult, tmp, result)
@@ -177,6 +233,7 @@ func BenchmarkRGBContrast(b *testing.B) {
 	_ = bb
 }
 
+//================================================================================
 func clipBlackTestHelper(t *testing.T, x, threshold, result float64) {
 	if tmp := ClipBlack(x, threshold); tmp != result {
 		t.Errorf("ClipBlack(%f,%f) = %f, want %f", x, threshold, tmp, result)
@@ -194,6 +251,7 @@ func BenchmarkClipBlack(b *testing.B) {
 	}
 }
 
+//================================================================================
 func modDistTestHelper(t *testing.T, a, b, n, result float64) {
 	if tmp := ModDist(a, b, n); tmp != result {
 		t.Errorf("ModDist(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
@@ -229,6 +287,7 @@ func BenchmarkModDist(b *testing.B) {
 	}
 }
 
+//================================================================================
 func modDist2TestHelper(t *testing.T, a, b, n, result float64) {
 	if tmp := ModDist2(a, b, n); math.Abs(tmp-result) > 0.001 {
 		t.Errorf("ModDist2(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
@@ -264,6 +323,7 @@ func BenchmarkModDist2(b *testing.B) {
 	}
 }
 
+//================================================================================
 func gammaTestHelper(t *testing.T, x, gamma, result float64) {
 	if tmp := Gamma(x, gamma); tmp != result {
 		t.Errorf("Gamma(%f,%f) = %f, want %f", x, gamma, tmp, result)
