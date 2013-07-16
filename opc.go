@@ -42,13 +42,22 @@ func readLocations(fn string) []float64 {
 
 // Connect to an ip:port and send the values array with an OPC header in front of it.
 func connectAndSend(ipPort string, values []byte) {
-	time.Sleep(1 * time.Millisecond)
-
-	// connect
-	conn, err := net.Dial("tcp", ipPort)
-	if err != nil {
-		fmt.Println(err)
-		return
+	// try to connect until we succeed
+	// if we fail after several tries, just return
+	triesLeft := 5
+	var conn net.Conn
+	var err error
+	for {
+		conn, err = net.Dial("tcp", ipPort)
+		if err == nil {
+			break
+		}
+		fmt.Println(triesLeft, err)
+		time.Sleep(1 * time.Millisecond)
+		triesLeft -= 1
+		if triesLeft == 0 {
+			return
+		}
 	}
 	defer conn.Close()
 
