@@ -44,7 +44,7 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 			pct := float64(ii) / float64(n_pixels)
 
 			// diagonal black stripes
-			pct_jittered := math.Mod((pct*77)+37, 37)
+			pct_jittered := colorutils.PosMod2((pct * 77), 37)
 			blackstripes := colorutils.Cos(pct_jittered, t*0.05, 1, -1.5, 1.5) // offset, period, minn, maxx
 			blackstripes_offset := colorutils.Cos(t, 0.9, 60, -0.5, 3)
 			blackstripes = colorutils.Clamp(blackstripes+blackstripes_offset, 0, 1)
