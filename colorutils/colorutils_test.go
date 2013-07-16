@@ -44,9 +44,14 @@ func TestPosMod(t *testing.T) {
 	posModTestHelper(t, 10, 10, 0)
 	posModTestHelper(t, 11, 10, 1)
 }
+func BenchmarkMathMod(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		math.Mod(1431.4, 104.5)
+	}
+}
 func BenchmarkPosMod(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		PosMod(1431.4,104.5)
+		PosMod(1431.4, 104.5)
 	}
 }
 
@@ -71,7 +76,7 @@ func TestPosMod2(t *testing.T) {
 }
 func BenchmarkPosMod2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		PosMod2(1431.4,104.5)
+		PosMod2(1431.4, 104.5)
 	}
 }
 

@@ -42,11 +42,11 @@ func PosMod(a, b float64) float64 {
 // The result is always positive, like in Python
 func PosMod2(a, b float64) float64 {
 	_, f := math.Modf(a / b)
-    result := f * b
-    if result  < 0 {
-        return result + b
-    }
-    return result
+	result := f * b
+	if result < 0 {
+		return result + b
+	}
+	return result
 }
 
 //================================================================================
@@ -142,12 +142,12 @@ func ClipBlack(x, threshold float64) float64 {
 // For example, thinking of a clock:
 //    mod_dist(11, 1, 12) == 2 because you can "wrap around".
 func ModDist(a, b, n float64) float64 {
-	return math.Min(PosMod(a-b+n, n), PosMod(b-a+n, n))
+	return math.Min(PosMod(a-b, n), PosMod(b-a, n))
 }
 
 // Like ModDist2, but using faster and less accurate Mod2
 func ModDist2(a, b, n float64) float64 {
-	return math.Min(PosMod2(a-b+n, n), PosMod2(b-a+n, n))
+	return math.Min(PosMod2(a-b, n), PosMod2(b-a, n))
 }
 
 // Apply a gamma exponent to x.  If x is negative, use 0 intsead.
