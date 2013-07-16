@@ -41,9 +41,10 @@ func readLocations(fn string) []float64 {
 }
 
 // Connect to an ip:port and send the values array with an OPC header in front of it.
-func connectAndSend(ipPort string, values []byte) {
+func connectAndSend(networkWantsMore chan int, sendThisSlice chan []byte, ipPort string) {
 	// try to connect until we succeed
 	// if we fail after several tries, just return
+	fmt.Printf("connecting to %v...\n", ipPort)
 	triesLeft := 5
 	var conn net.Conn
 	var err error
@@ -60,23 +61,32 @@ func connectAndSend(ipPort string, values []byte) {
 		}
 	}
 	defer conn.Close()
+	fmt.Println("    connected")
 
-	// make and send header
-	channel := byte(0)
-	command := byte(0)
-	lenLowByte := byte(len(values) % 256)
-	lenHighByte := byte(len(values) / 256)
-	header := []byte{channel, command, lenHighByte, lenLowByte}
-	_, err = conn.Write(header)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	// loop forever, getting slices to send
+	for {
+		// indicate we're idle
+		networkWantsMore <- 1
+		// wait to get a slice to send
+		values := <-sendThisSlice
 
-	// send pixels
-	_, err = conn.Write(values)
-	if err != nil {
-		fmt.Println(err)
+		// make and send header
+		channel := byte(0)
+		command := byte(0)
+		lenLowByte := byte(len(values) % 256)
+		lenHighByte := byte(len(values) / 256)
+		header := []byte{channel, command, lenHighByte, lenLowByte}
+		_, err = conn.Write(header)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		// send pixels
+		_, err = conn.Write(values)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
@@ -88,7 +98,16 @@ func main() {
 
 	LOCATIONS := readLocations(path)
 	N_PIXELS := len(LOCATIONS) / 3
-	VALUES := make([]byte, N_PIXELS*3)
+	VALUES := make([][]byte, 2)
+	VALUES[0] = make([]byte, N_PIXELS*3)
+	VALUES[1] = make([]byte, N_PIXELS*3)
+
+	writing, sending := 0, 1
+
+	networkWantsMore := make(chan int,0)
+	sendThisSlice := make(chan []byte,0)
+
+	go connectAndSend(networkWantsMore, sendThisSlice, ipPort)
 
 	// fill in values over and over
 	var pct, r, g, b, t float64
@@ -111,16 +130,20 @@ func main() {
 			g = pct
 			b = pct
 
-			VALUES[ii*3+0] = colorutils.FloatToByte(r)
-			VALUES[ii*3+1] = colorutils.FloatToByte(g)
-			VALUES[ii*3+2] = colorutils.FloatToByte(b)
+			VALUES[writing][ii*3+0] = colorutils.FloatToByte(r)
+			VALUES[writing][ii*3+1] = colorutils.FloatToByte(g)
+			VALUES[writing][ii*3+2] = colorutils.FloatToByte(b)
 		}
 
-		connectAndSend(ipPort, VALUES)
+		// wait until the network is idle
+		<-networkWantsMore
+		// swap the slices
+		writing, sending = sending, writing
+		// tell the network to start sending the one we just finished making
+		sendThisSlice <- VALUES[sending]
 
 		//for ii, v := range VALUES {
 		//    fmt.Printf("VALUES[%d] = %d\n", ii, v)
 		//}
 	}
-
 }
