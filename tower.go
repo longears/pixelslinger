@@ -1,5 +1,10 @@
 package main
 
+// TODO
+//  command line parameters (layout file, ip:port)
+//  figure out how to have multiple executable files in a directory
+//  make lookup tables (Cos, Gamma, ...?)
+
 import (
 	"bitbucket.org/davidwallace/go-tower/colorutils"
 	"bitbucket.org/davidwallace/go-tower/opc"
