@@ -2,6 +2,7 @@ package main
 
 import (
 	"bitbucket.org/davidwallace/go-opc/colorutils"
+    "math"
 	"bufio"
 	"fmt"
 	"github.com/davecheney/profile"
@@ -70,6 +71,7 @@ func networkThread(networkWantsMore chan int, sendThisSlice chan []byte, ipPort 
 
 	// loop forever, getting slices to send
 	for {
+
 		// indicate we're idle
 		networkWantsMore <- 1
 
@@ -116,8 +118,9 @@ func networkThread(networkWantsMore chan int, sendThisSlice chan []byte, ipPort 
 func main() {
 	defer profile.Start(profile.CPUProfile).Stop()
 
-	path := "circle.json"
-	ipPort := "127.0.0.1:7890"
+	path := "layouts/freespace.json"
+	//ipPort := "127.0.0.1:7890"
+	ipPort := "192.168.11.11:7890"
 
 	LOCATIONS := readLocations(path)
 	N_PIXELS := len(LOCATIONS) / 3
@@ -133,12 +136,27 @@ func main() {
 	go networkThread(networkWantsMore, sendThisSlice, ipPort)
 
 	// fill in values over and over
+
+
+    var (
+        // how many sine wave cycles are squeezed into our n_pixels
+        // 24 happens to create nice diagonal stripes on the wall layout
+        freq_r float64 = 24
+        freq_g float64 = 24
+        freq_b float64 = 24
+
+        // how many seconds the color sine waves take to shift through a complete cycle
+        speed_r float64 = 7
+        speed_g float64 = -13
+        speed_b float64 = 19
+    )
+
 	var pct, r, g, b, t float64
 	var last_print = float64(time.Now().UnixNano()) / 1.0e9
 	var frames = 0
 	var start_time = last_print
 	t = start_time
-	for t < start_time+5 {
+	for t < start_time+50 {
 		t = float64(time.Now().UnixNano()) / 1.0e9
 		// fps bookkeeping
 		frames += 1
@@ -151,14 +169,23 @@ func main() {
 		for ii := 0; ii < N_PIXELS; ii++ {
 			pct = float64(ii) / float64(N_PIXELS)
 
-			r = pct
-			g = pct
-			b = pct
+            // diagonal black stripes
+            pct_jittered := math.Mod((pct * 77) + 37, 37)
+            blackstripes := colorutils.Cos(pct_jittered, t*0.05, 1, -1.5, 1.5) // offset, period, minn, maxx
+            blackstripes_offset := colorutils.Cos(t, 0.9, 60, -0.5, 3)
+            blackstripes = colorutils.Clamp(blackstripes + blackstripes_offset, 0, 1)
+
+            // 3 sine waves for r, g, b which are out of sync with each other
+            r = blackstripes * colorutils.Remap(math.Cos((t/speed_r + pct*freq_r)*math.Pi*2), -1, 1, 0, 1)
+            g = blackstripes * colorutils.Remap(math.Cos((t/speed_g + pct*freq_g)*math.Pi*2), -1, 1, 0, 1)
+            b = blackstripes * colorutils.Remap(math.Cos((t/speed_b + pct*freq_b)*math.Pi*2), -1, 1, 0, 1)
 
 			VALUES[writing][ii*3+0] = colorutils.FloatToByte(r)
 			VALUES[writing][ii*3+1] = colorutils.FloatToByte(g)
 			VALUES[writing][ii*3+2] = colorutils.FloatToByte(b)
 		}
+
+        time.Sleep(10 * time.Millisecond)
 
 		// wait until the network is idle
 		<-networkWantsMore
