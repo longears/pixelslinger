@@ -2,6 +2,9 @@ package colorutils
 
 import "math"
 
+//================================================================================
+// OPTIMIZATIONS
+
 const TABLE_SIZE = 2048
 
 var COS_LOOKUP = make([]float64, TABLE_SIZE)
@@ -14,6 +17,7 @@ func init() {
 	}
 }
 
+// Like math.Cos but using a lookup table.  About twice as fast.
 func CosTable(x float64) float64 {
 	pct := x / (math.Pi * 2)
 	ii := int64(pct*TABLE_SIZE + 0.5)
@@ -25,11 +29,14 @@ func CosTable(x float64) float64 {
 }
 
 // Faster version of math.Mod(a,b) based on math.Modf
-// Slightly less accurate, especially if b is very large or small
+// Less accurate, especially if b is very large or small
 func Mod2(a, b float64) float64 {
 	_, f := math.Modf(a / b)
 	return f * b
 }
+
+//================================================================================
+// HELPERS
 
 // Given a float in the range 0-1, return a byte from 0 to 255.
 func FloatToByte(x float64) byte {
@@ -41,6 +48,9 @@ func FloatToByte(x float64) byte {
 		return byte(x * 256)
 	}
 }
+
+//================================================================================
+// COLOR UTILS
 
 // Remap the float x from the range oldmin-oldmax to the range newmin-newmax
 // Does not clamp values that exceed min or max.
@@ -70,26 +80,30 @@ func Clamp(x, minn, maxx float64) float64 {
 	}
 }
 
-//A cosine curve scaled to fit in a 0-1 range and 0-1 domain by default.
-//offset: how much to slide the curve across the domain (should be 0-1)
-//period: the length of one wave
-//minn, maxx: the output range
+// A cosine curve scaled to fit in a 0-1 range and 0-1 domain by default.
+//    offset: how much to slide the curve across the domain (should be 0-1)
+//    period: the length of one wave
+//    minn, maxx: the output range
 func Cos(x, offset, period, minn, maxx float64) float64 {
 	var value = math.Cos((x/period-offset)*math.Pi*2)/2 + 0.5
 	return value*(maxx-minn) + minn
 }
+
+// Like Cos, but using a lookup table.
 func Cos2(x, offset, period, minn, maxx float64) float64 {
 	var value = CosTable((x/period-offset)*math.Pi*2)/2 + 0.5
 	return value*(maxx-minn) + minn
 }
 
-//Expand the color values by a factor of mult around the pivot value of center.
-//color: an (r, g, b) tuple
-//center: a float -- the fixed point
-//mult: a float -- expand or contract the values around the center point
+// Expand the color values by a factor of mult around the pivot value of center.
+//    color: an (r, g, b) tuple
+//    center: a float -- the fixed point
+//    mult: a float -- expand or contract the values around the center point
 func Contrast(x, center, mult float64) float64 {
 	return (x-center)*mult + center
 }
+
+// Like Contrast, but on 3 channels at once
 func RGBContrast(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 float64) {
 	r2 = (r-center)*mult + center
 	g2 = (g-center)*mult + center
@@ -109,18 +123,20 @@ func ClipBlack(x, threshold float64) float64 {
 // TODO: RBGClipBlackByChannel
 // TODO: RBGClipBlackByLuminance
 
-//Return the distance between floats a and b, modulo n.
-//The result is always non-negative.
-//For example, thinking of a clock:
-//mod_dist(11, 1, 12) == 2 because you can "wrap around".
+// Return the distance between floats a and b, modulo n.
+// The result is always non-negative.
+// For example, thinking of a clock:
+//    mod_dist(11, 1, 12) == 2 because you can "wrap around".
 func ModDist(a, b, n float64) float64 {
 	return math.Min(math.Mod(a-b+n, n), math.Mod(b-a+n, n))
 }
+
+// Like ModDist2, but using faster and less accurate Mod2
 func ModDist2(a, b, n float64) float64 {
 	return math.Min(Mod2(a-b+n, n), Mod2(b-a+n, n))
 }
 
-// Apply a gamma exponent to x.  If x is negative, use 0 intead.
+// Apply a gamma exponent to x.  If x is negative, use 0 intsead.
 func Gamma(x, gamma float64) float64 {
 	if x <= 0 {
 		return 0
@@ -128,6 +144,8 @@ func Gamma(x, gamma float64) float64 {
 		return math.Pow(x, gamma)
 	}
 }
+
+// Like Gamma, but on 3 channels at once
 func RGBGamma(r, g, b, gamma float64) (float64, float64, float64) {
 	if r <= 0 {
 		r = 0
