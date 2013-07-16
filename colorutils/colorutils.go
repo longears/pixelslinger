@@ -6,8 +6,8 @@ import "math"
 func FloatToByte(x float64) byte {
 	if x >= 1 {
 		return 255
-    } else if x <= 0 {
-        return 0
+	} else if x <= 0 {
+		return 0
 	} else {
 		return byte(x * 256)
 	}
@@ -61,7 +61,7 @@ func RGBContrast(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 floa
 	r2 = (r-center)*mult + center
 	g2 = (g-center)*mult + center
 	b2 = (b-center)*mult + center
-    return
+	return
 }
 
 // TODO: RGBContrast
@@ -93,6 +93,24 @@ func Gamma(x, gamma float64) float64 {
 	} else {
 		return math.Pow(x, gamma)
 	}
+}
+func RGBGamma(r, g, b, gamma float64) (float64, float64, float64) {
+	if r <= 0 {
+		r = 0
+	} else {
+		r = math.Pow(r, gamma)
+	}
+	if g <= 0 {
+		g = 0
+	} else {
+		g = math.Pow(g, gamma)
+	}
+	if b <= 0 {
+		b = 0
+	} else {
+		b = math.Pow(b, gamma)
+	}
+	return r, g, b
 }
 
 // TODO: RGBGamma
