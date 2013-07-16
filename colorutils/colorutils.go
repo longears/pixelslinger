@@ -6,8 +6,9 @@ import "math"
 func FloatToByte(x float64) byte {
 	if x >= 1 {
 		return 255
+    } else if x <= 0 {
+        return 0
 	} else {
-		// this works for x < 0 but not x > 1
 		return byte(x * 256)
 	}
 }
