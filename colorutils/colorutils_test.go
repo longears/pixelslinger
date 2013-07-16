@@ -120,9 +120,24 @@ func TestContrast(t *testing.T) {
 	contrastTestHelper(t, 0.0, 0.5, 2.0, -0.5)
 }
 func BenchmarkContrast(b *testing.B) {
+    var rr, gg, bb float64
 	for i := 0; i < b.N; i++ {
-		Contrast(0.3, 0.3, 0.3)
+		rr = Contrast(0.3, 0.3, 0.3)
+		gg = Contrast(0.3, 0.3, 0.3)
+		bb = Contrast(0.3, 0.3, 0.3)
 	}
+    _ = rr
+    _ = gg
+    _ = bb
+}
+func BenchmarkRGBContrast(b *testing.B) {
+    var rr,gg,bb float64
+	for i := 0; i < b.N; i++ {
+		rr, gg, bb = RGBContrast(0.1, 0.2, 0.3, 0.3, 0.3)
+	}
+    _ = rr
+    _ = gg
+    _ = bb
 }
 
 func clipBlackTestHelper(t *testing.T, x, threshold, result float64) {

@@ -57,6 +57,12 @@ func Cos(x, offset, period, minn, maxx float64) float64 {
 func Contrast(x, center, mult float64) float64 {
 	return (x-center)*mult + center
 }
+func RGBContrast(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 float64) {
+	r2 = (r-center)*mult + center
+	g2 = (g-center)*mult + center
+	b2 = (b-center)*mult + center
+    return
+}
 
 // TODO: RGBContrast
 

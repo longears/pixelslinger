@@ -42,9 +42,7 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
             r := colorutils.Cos(x, t / 4, 1, 0, 0.7) // offset, period, minn, max
             g := colorutils.Cos(y, t / 4, 1, 0, 0.7)
             b := colorutils.Cos(z, t / 4, 1, 0, 0.7)
-            r = colorutils.Contrast(r, 0.5, 2)
-            g = colorutils.Contrast(g, 0.5, 2)
-            b = colorutils.Contrast(b, 0.5, 2)
+            r, g, b = colorutils.RGBContrast(r, g, b, 0.5, 2)
 
             // make a moving white dot showing the order of the pixels in the layout file
             spark_ii := math.Mod(t*80 + float64(n_pixels), float64(n_pixels))
