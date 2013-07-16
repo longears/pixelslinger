@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bitbucket.org/davidwallace/go-opc/colorutils"
 	"bufio"
 	"fmt"
+	"github.com/davecheney/profile"
+	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/davecheney/profile"
-	"bitbucket.org/davidwallace/go-opc/colorutils"
 )
 
 // read locations from JSON file into a slice of floats
@@ -39,10 +40,42 @@ func readLocations(fn string) []float64 {
 	return locations
 }
 
+// Connect to an ip:port and send the values array with an OPC header in front of it.
+func connectAndSend(ipPort string, values []byte) {
+	time.Sleep(1 * time.Millisecond)
+
+	// connect
+	conn, err := net.Dial("tcp", ipPort)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer conn.Close()
+
+	// make and send header
+	channel := byte(0)
+	command := byte(0)
+	lenLowByte := byte(len(values) % 256)
+	lenHighByte := byte(len(values) / 256)
+	header := []byte{channel, command, lenHighByte, lenLowByte}
+	_, err = conn.Write(header)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// send pixels
+	_, err = conn.Write(values)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func main() {
 	defer profile.Start(profile.CPUProfile).Stop()
 
 	path := "circle.json"
+	ipPort := "127.0.0.1:7890"
 
 	LOCATIONS := readLocations(path)
 	N_PIXELS := len(LOCATIONS) / 3
@@ -73,6 +106,8 @@ func main() {
 			VALUES[ii*3+1] = colorutils.FloatToByte(g)
 			VALUES[ii*3+2] = colorutils.FloatToByte(b)
 		}
+
+		connectAndSend(ipPort, VALUES)
 
 		//for ii, v := range VALUES {
 		//    fmt.Printf("VALUES[%d] = %d\n", ii, v)
