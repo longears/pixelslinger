@@ -1,10 +1,7 @@
 package main
 
-// TODO
-//  command line parameters (layout file, ip:port)
-//  figure out how to have multiple executable files in a directory
-//  make lookup tables (Cos, Gamma, ...?)
-//  write a pattern that relies on location
+// Raver plaid
+//   A rainbowy pattern with moving diagonal black stripes
 
 import (
 	"bitbucket.org/davidwallace/go-tower/colorutils"
@@ -20,6 +17,7 @@ func saveToSlice(slice []byte, ii int, r, g, b float64) {
 }
 
 func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []float64) {
+	// pattern parameters
 	var (
 		// how many sine wave cycles are squeezed into our n_pixels
 		// 24 happens to create nice diagonal stripes on the wall layout
@@ -41,6 +39,7 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 		// fill in values array
 		for ii := 0; ii < n_pixels; ii++ {
 			//--------------------------------------------------------------------------------
+
 			pct := float64(ii) / float64(n_pixels)
 
 			// replicate a quirk in the original python version of this pattern
@@ -58,7 +57,6 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 			b := blackstripes * colorutils.Remap(math.Cos((t/speed_b+pct*freq_b)*math.Pi*2), -1, 1, 0, 1)
 
 			saveToSlice(values, ii, r, g, b)
-
 			//--------------------------------------------------------------------------------
 		}
 		sliceIsFilled <- 1

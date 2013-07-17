@@ -1,10 +1,9 @@
 package main
 
-// TODO
-//  command line parameters (layout file, ip:port)
-//  figure out how to have multiple executable files in a directory
-//  make lookup tables (Cos, Gamma, ...?)
-//  write a pattern that relies on location
+// Spatial Stripes
+//   Creates spatial sine wave stripes: x in the red channel, y--green, z--blue
+//   Also makes a white dot which moves down the strip non-spatially in the order
+//   that the LEDs are indexed.
 
 import (
 	"bitbucket.org/davidwallace/go-tower/colorutils"
