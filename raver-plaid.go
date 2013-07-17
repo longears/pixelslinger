@@ -37,11 +37,14 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 		// wait for slice to fill
 		values := <-fillThisSlice
 		n_pixels := len(values) / 3
-		t := float64(time.Now().UnixNano()) / 1.0e9
+		t := float64(time.Now().UnixNano())/1.0e9 - 1374000000
 		// fill in values array
 		for ii := 0; ii < n_pixels; ii++ {
 			//--------------------------------------------------------------------------------
 			pct := float64(ii) / float64(n_pixels)
+
+			// replicate a quirk in the original python version of this pattern
+			pct /= 2
 
 			// diagonal black stripes
 			pct_jittered := colorutils.PosMod2((pct * 77), 37)

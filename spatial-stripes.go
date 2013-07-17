@@ -24,7 +24,7 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 		// wait for slice to fill
 		values := <-fillThisSlice
 		n_pixels := len(values) / 3
-		t := float64(time.Now().UnixNano()) / 1.0e9
+		t := float64(time.Now().UnixNano())/1.0e9 - 1374000000
 		// fill in values slice
 		for ii := 0; ii < n_pixels; ii++ {
 			//--------------------------------------------------------------------------------
