@@ -3,7 +3,7 @@ package main
 // Turn all the LEDs off
 
 import (
-	"bitbucket.org/davidwallace/go-tower/opc"
+	"bitbucket.org/davidwallace/go-metal/opc"
 	"fmt"
 )
 

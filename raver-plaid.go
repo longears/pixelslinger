@@ -4,8 +4,8 @@ package main
 //   A rainbowy pattern with moving diagonal black stripes
 
 import (
-	"bitbucket.org/davidwallace/go-tower/colorutils"
-	"bitbucket.org/davidwallace/go-tower/opc"
+	"bitbucket.org/davidwallace/go-metal/colorutils"
+	"bitbucket.org/davidwallace/go-metal/opc"
 	"math"
 	"time"
 )
