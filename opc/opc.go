@@ -13,6 +13,44 @@ import (
 	"time"
 )
 
+//================================================================================
+/*
+
+// get byte slices over the input channel
+// send them over the network
+// send the slice over the output channel so it can be reused
+//  and so others will know that it has finished sending.
+func sendToOPC (in <-chan []byte, out chan<- []byte, ipPort string) {
+    for bytes := range in {
+        fmt.Println("[chanToOPC] got", length(bytes), "bytes")
+    }
+}
+
+// get byte slices over the input channel
+// send them over the network
+// send the slice over the output channel so it can be reused
+//  and so others will know that it has finished sending.
+func sendToSPI_LPD8806 (in <-chan []byte, out chan<- byte) {
+    for bytes := range in {
+        fmt.Println("[chanToSPI_LPD8806] got", length(bytes), "bytes")
+    }
+}
+
+// get a slice from the input channel
+// when receiving network data, write it into the slice.
+// resize the slice as needed.
+// send the resulting frame of pixels over the output channel
+func recvFromOPC (in <-chan []byte, out chan<- []byte, port string) {
+    // while receiving data {
+    //     out <- data
+    // }
+}
+
+*/
+//================================================================================
+
+
+
 const CONNECTION_TRIES = 1
 
 // times in ms
