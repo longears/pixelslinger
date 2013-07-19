@@ -19,9 +19,11 @@ func saveToSlice(slice []byte, ii int, r, g, b float64) {
 }
 
 func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []float64) {
-	for {
-		// wait for slice to fill
-		values := <-fillThisSlice
+    flipper := 0
+	for values := range fillThisSlice {
+        opc.SetOnboardLED(opc.FILLING_LED, flipper)
+        flipper = 1 - flipper
+
 		n_pixels := len(values) / 3
 		t := float64(time.Now().UnixNano())/1.0e9 - 1374000000
 		// fill in values slice

@@ -7,49 +7,17 @@ import (
 	"math"
 	"net"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 )
 
-//================================================================================
-/*
+const FILLING_LED = 0
+const SENDING_LED = 1
 
-// get byte slices over the input channel
-// send them over the network
-// send the slice over the output channel so it can be reused
-//  and so others will know that it has finished sending.
-func sendToOPC (in <-chan []byte, out chan<- []byte, ipPort string) {
-    for bytes := range in {
-        fmt.Println("[chanToOPC] got", length(bytes), "bytes")
-    }
-}
+const SPI_MAGIC_WORD = "SPI"
 
-// get byte slices over the input channel
-// send them over the network
-// send the slice over the output channel so it can be reused
-//  and so others will know that it has finished sending.
-func sendToSPI_LPD8806 (in <-chan []byte, out chan<- byte) {
-    for bytes := range in {
-        fmt.Println("[chanToSPI_LPD8806] got", length(bytes), "bytes")
-    }
-}
-
-// get a slice from the input channel
-// when receiving network data, write it into the slice.
-// resize the slice as needed.
-// send the resulting frame of pixels over the output channel
-func recvFromOPC (in <-chan []byte, out chan<- []byte, port string) {
-    // while receiving data {
-    //     out <- data
-    // }
-}
-
-*/
-//================================================================================
-
-
+const SPI_FN = "/dev/spidev1.0"
 
 const CONNECTION_TRIES = 1
 
@@ -58,12 +26,14 @@ const WAIT_TO_RETRY = 1000
 const WAIT_BETWEEN_RETRIES = 1
 
 func helpAndQuit() {
+	fmt.Println("--------------------------------------------------------------------------------\\")
 	fmt.Println("")
 	fmt.Println("Usage:  program-name  <layout.json>  [ip:port  [fps  [seconds-to-run]]]")
 	fmt.Println("")
 	fmt.Println("    layout.json       A layout json file")
 	fmt.Println("    ip:port           Server to connect to.  Port is optional and defaults to 7890.")
 	fmt.Println("                        You can use a hostname instead of an ip address.")
+	fmt.Println("                        Or set it to \"SPI\" to send data out to the SPI port.")
 	fmt.Println("    fps               Desired frames per second.  User 0 for no limit.")
 	fmt.Println("    seconds-to-run    Quit after this many seconds.  Use 0 for forever.")
 	fmt.Println("                        If nonzero, the profiler will be turned on.")
@@ -88,7 +58,7 @@ func ParseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
 	}
 	if len(os.Args) >= 3 {
 		ipPort = os.Args[2]
-		if !strings.Contains(ipPort, ":") {
+		if ipPort != SPI_MAGIC_WORD && !strings.Contains(ipPort, ":") {
 			ipPort += ":7890"
 		}
 	}
@@ -108,6 +78,31 @@ func ParseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
 		helpAndQuit()
 	}
 	return
+}
+
+// Set one of the on-board LEDs on the Beaglebone.
+//    ledNum: between 0 and 3 inclusive
+//    val: 0 or 1.
+func SetOnboardLED(ledNum int, val int) {
+    return
+	ledFn := fmt.Sprintf("/sys/class/leds/beaglebone:green:usr%d/brightness", ledNum)
+	fmt.Println(ledFn)
+
+	// open output file
+	ledFile, err := os.Create(ledFn)
+	if err != nil {
+		panic(err)
+	}
+	// close ledFile on exit and check for its returned error
+	defer func() {
+		if err := ledFile.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	if _, err := ledFile.WriteString(strconv.Itoa(val)); err != nil {
+		panic(err)
+	}
 }
 
 // Read locations from JSON file into a slice of floats
@@ -161,22 +156,91 @@ func getConnection(ipPort string) net.Conn {
 	return conn
 }
 
+func SendingDummyThread(sendThisSlice chan []byte, sliceIsSent chan int) {
+	flipper := 0
+    for _ = range sendThisSlice {
+		// toggle onboard LED
+		SetOnboardLED(SENDING_LED, flipper)
+		flipper = 1 - flipper
+
+        sliceIsSent <- 1
+    }
+}
+
+// Recieve byte slices over the pixelsToSend channel.
+// When we get one, write it to the SPI file descriptor and toggle one
+//  of the Beaglebone's onboard LEDs.
+// After sending the frame, send 1 over the sliceIsSent channel.
+// The byte slice should hold values from 0 to 255 in [r g b  r g b  r g b  ... ] order.
+func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
+    fmt.Println("[opc.SendingToLPD8806Thread] booting")
+
+	// open output file and keep the file descriptor around
+	spiFile, err := os.Create(SPI_FN)
+	if err != nil {
+        fmt.Println("[opc.SendingToLPD8806Thread] Error opening SPI file:")
+        fmt.Println(err)
+        os.Exit(1)
+	}
+	// close spiFile on exit and check for its returned error
+	defer func() {
+		if err := spiFile.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	flipper := 0
+	// as we get byte slices over the channel...
+	for values := range sendThisSlice {
+		fmt.Println("[opc.SendingToLPD8806Thread] starting to send", len(values), "values")
+
+		// toggle onboard LED
+		SetOnboardLED(SENDING_LED, flipper)
+		flipper = 1 - flipper
+
+		// build a new slice of bytes in the format the LED strand wants
+        // TODO: avoid allocating these bytes over and over
+		bytes := make([]byte, 0)
+
+		// leading zeros to begin a new frame of values
+		numZeroes := (len(values) / 32) + 2
+		for ii := 0; ii < numZeroes*5; ii++ {
+			bytes = append(bytes, 0)
+		}
+
+		// values
+		for _, v := range values {
+			// high bit must be always on, remaining seven bits are data
+			v2 := 128 | (v >> 1)
+			bytes = append(bytes, v2)
+		}
+
+		// final zero to latch the last pixel
+		bytes = append(bytes, 0)
+
+        // actually send bytes over the wire
+        if _, err := spiFile.Write(bytes); err != nil {
+            panic(err)
+        }
+
+		sliceIsSent <- 1
+	}
+}
+
 // Initiate and Maintain a connection to ipPort.
 // When a slice comes in through sendThisSlice, send it with an OPC header.
 // Loop forever.
-func NetworkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
+func SendingToOpcThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
+    fmt.Println("[opc.SendingToOpcThread] booting")
+
 	var conn net.Conn
 	var err error
 
-	for {
-		cmd := exec.Command("/home/root/led1off.sh")
-		_, _ = cmd.Output()
-
-		// wait to get a slice to send
-		values := <-sendThisSlice
-
-		cmd = exec.Command("/home/root/led1on.sh")
-		_, _ = cmd.Output()
+    flipper := 0
+	for values := range sendThisSlice {
+		// toggle onboard LED
+		SetOnboardLED(SENDING_LED, flipper)
+		flipper = 1 - flipper
 
 		// if the connection has gone bad, make a new one
 		if conn == nil {
@@ -185,6 +249,7 @@ func NetworkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 		// if that didn't work, wait a second and restart the loop
 		if conn == nil {
 			sliceIsSent <- 1
+            fmt.Println("[opc.SendingToOpcThread] waiting to retry")
 			time.Sleep(WAIT_TO_RETRY * time.Millisecond)
 			continue
 		}
@@ -200,7 +265,7 @@ func NetworkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 		_, err = conn.Write(header)
 		if err != nil {
 			// net error -- set conn to nil so we can try to make a new one
-			fmt.Println("[opc.net]", err)
+			fmt.Println("[opc.SendingToOpcThread]", err)
 			conn = nil
 			sliceIsSent <- 1
 			continue
@@ -210,18 +275,17 @@ func NetworkThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort strin
 		_, err = conn.Write(values)
 		if err != nil {
 			// net error -- set conn to nil so we can try to make a new one
-			fmt.Println("[opc.net]", err)
+			fmt.Println("[opc.SendingToOpcThread]", err)
 			conn = nil
 			sliceIsSent <- 1
 			continue
 		}
 		sliceIsSent <- 1
-
 	}
 }
 
 // Launch the pixelThread and suck pixels out of it
-// Also launch the networkThread and feed the pixels to it
+// Also launch the SendingToOpcThread and feed the pixels to it
 // Run until timeToRun seconds have passed
 // Set timeToRun to 0 to run forever
 // Set timeToRun to a negative to benchmark your pixelThread function by itself.
@@ -246,11 +310,8 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 	// load location and build initial slices
 	locations := ReadLocations(layoutPath)
 	n_pixels := len(locations) / 3
-	values := make([][]byte, 2)
-	values[0] = make([]byte, n_pixels*3)
-	values[1] = make([]byte, n_pixels*3)
-
-	filling, sending := 0, 1
+	fillingSlice := make([]byte, n_pixels*3)
+	sendingSlice := make([]byte, n_pixels*3)
 
 	fillThisSlice := make(chan []byte, 0)
 	sliceIsFilled := make(chan int, 0)
@@ -258,8 +319,12 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 	sliceIsSent := make(chan int, 0)
 
 	// start threads
-	go NetworkThread(sendThisSlice, sliceIsSent, ipPort)
-	go pixelThread(fillThisSlice, sliceIsFilled, locations)
+    if ipPort == SPI_MAGIC_WORD {
+        go SendingToLPD8806Thread(sendThisSlice, sliceIsSent)
+    } else {
+        go SendingToOpcThread(sendThisSlice, sliceIsSent, ipPort)
+    }
+    go pixelThread(fillThisSlice, sliceIsFilled, locations)
 
 	// main loop
 	startTime := float64(time.Now().UnixNano()) / 1.0e9
@@ -281,10 +346,10 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 			return
 		}
 
-		// start filling and sending
-		fillThisSlice <- values[filling]
+		// start filling and sendingSlice
+		fillThisSlice <- fillingSlice
 		if timeToRun >= 0 {
-			sendThisSlice <- values[sending]
+			sendThisSlice <- sendingSlice
 		}
 
 		// wait until both are ready
@@ -304,6 +369,6 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 		}
 
 		// swap
-		filling, sending = sending, filling
+		fillingSlice, sendingSlice = sendingSlice, fillingSlice
 	}
 }
