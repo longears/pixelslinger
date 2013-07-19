@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const SPI_FN = "/dev/spidev1.0"
+
 // Set one of the on-board LEDs on the Beaglebone.
 //    ledNum: between 0 and 3 inclusive
 //    val: 0 or 1.
@@ -51,11 +53,12 @@ func sendBytes(fd *os.File, bytes []byte) {
 // The byte slice should hold values from 0 to 255 in [r g b  r g b  r g b  ... ] order.
 func spiThread(pixelsToSend chan []byte, sendingIsDone chan int) {
 
-	spiFn := "/dev/spidev1.0"
-
 	// open output file and keep the file descriptor around
-	spiFile, err := os.Create(spiFn)
+	spiFile, err := os.Create(SPI_FN)
 	if err != nil {
+        fmt.Println("Error opening SPI file:")
+        fmt.Println(err)
+        os.Exit(1)
 		panic(err)
 	}
 	// close spiFile on exit and check for its returned error
