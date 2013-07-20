@@ -16,6 +16,7 @@ const SPI_FN = "/dev/spidev1.0"
 
 // Display command-line help, then quit.
 func helpAndQuit() {
+	// todo: once
 	fmt.Println("--------------------------------------------------------------------------------\\")
 	fmt.Println("")
 	fmt.Println("Usage:  program-name  <layout.json>  [destination  [fps  [seconds-to-run]]]")
@@ -171,5 +172,5 @@ func main() {
 	defer fmt.Println("--------------------------------------------------------------------------------/")
 
 	locations := opc.ReadLocations(layoutPath)
-	mainLoop(locations, opc.PatternRaverPlaid, layoutPath, ipPort, fps, timeToRun)
+	mainLoop(locations, opc.PatternSpatialStripes, layoutPath, ipPort, fps, timeToRun)
 }
