@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-// Note that ii is the pixel number, not the actual array index.
-func saveFloatRgbToByteSlice(slice []byte, ii int, r, g, b float64) {
-	slice[ii*3+0] = colorutils.FloatToByte(r)
-	slice[ii*3+1] = colorutils.FloatToByte(g)
-	slice[ii*3+2] = colorutils.FloatToByte(b)
-}
-
 func PatternRaverPlaid(bytesIn chan []byte, bytesOut chan []byte, locations []float64) {
 	// pattern parameters
 	var (
@@ -55,7 +48,10 @@ func PatternRaverPlaid(bytesIn chan []byte, bytesOut chan []byte, locations []fl
 			g := blackstripes * colorutils.Remap(math.Cos((t/speed_g+pct*freq_g)*math.Pi*2), -1, 1, 0, 1)
 			b := blackstripes * colorutils.Remap(math.Cos((t/speed_b+pct*freq_b)*math.Pi*2), -1, 1, 0, 1)
 
-			saveFloatRgbToByteSlice(bytes, ii, r, g, b)
+			bytes[ii*3+0] = colorutils.FloatToByte(r)
+			bytes[ii*3+1] = colorutils.FloatToByte(g)
+			bytes[ii*3+2] = colorutils.FloatToByte(b)
+
 			//--------------------------------------------------------------------------------
 		}
 		bytesOut <- bytes

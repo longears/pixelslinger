@@ -1,4 +1,4 @@
-package main
+package opc
 
 // Spatial Stripes
 //   Creates spatial sine wave stripes: x in the red channel, y--green, z--blue
@@ -7,26 +7,15 @@ package main
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/opc"
 	"math"
 	"time"
 )
 
-func saveToSlice(slice []byte, ii int, r, g, b float64) {
-	slice[ii*3+0] = colorutils.FloatToByte(r)
-	slice[ii*3+1] = colorutils.FloatToByte(g)
-	slice[ii*3+2] = colorutils.FloatToByte(b)
-}
-
-func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []float64) {
-	flipper := 0
-	for values := range fillThisSlice {
-		opc.SetOnboardLED(opc.FILLING_LED, flipper)
-		flipper = 1 - flipper
-
-		n_pixels := len(values) / 3
+func PatternSpatialStripes(bytesIn chan []byte, bytesOut chan []byte, locations []float64) {
+	for bytes := range bytesIn {
+		n_pixels := len(bytes) / 3
 		t := float64(time.Now().UnixNano())/1.0e9 - 1374000000
-		// fill in values slice
+		// fill in bytes slice
 		for ii := 0; ii < n_pixels; ii++ {
 			//--------------------------------------------------------------------------------
 
@@ -52,15 +41,12 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 			// only do this on live leds, not in the simulator
 			//r, g, b = colorutils.RGBGamma(r, g, b, 2.2)
 
-			saveToSlice(values, ii, r, g, b)
+			bytes[ii*3+0] = colorutils.FloatToByte(r)
+			bytes[ii*3+1] = colorutils.FloatToByte(g)
+			bytes[ii*3+2] = colorutils.FloatToByte(b)
 
 			//--------------------------------------------------------------------------------
 		}
-		sliceIsFilled <- 1
+		bytesOut <- bytes
 	}
-}
-
-func main() {
-	layoutPath, ipPort, fps, timeToRun := opc.ParseFlags()
-	opc.MainLoop(pixelThread, layoutPath, ipPort, fps, timeToRun)
 }
