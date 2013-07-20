@@ -1,22 +1,22 @@
-package main
+package opc
 
 // Raver plaid
 //   A rainbowy pattern with moving diagonal black stripes
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/opc"
 	"math"
 	"time"
 )
 
-func saveToSlice(slice []byte, ii int, r, g, b float64) {
+// Note that ii is the pixel number, not the actual array index.
+func saveFloatRgbToByteSlice(slice []byte, ii int, r, g, b float64) {
 	slice[ii*3+0] = colorutils.FloatToByte(r)
 	slice[ii*3+1] = colorutils.FloatToByte(g)
 	slice[ii*3+2] = colorutils.FloatToByte(b)
 }
 
-func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []float64) {
+func PatternRaverPlaid(bytesIn chan []byte, bytesOut chan []byte, locations []float64) {
 	// pattern parameters
 	var (
 		// how many sine wave cycles are squeezed into our n_pixels
@@ -31,15 +31,11 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 		speed_b float64 = 19
 	)
 
-	flipper := 0
-	for values := range fillThisSlice {
-		opc.SetOnboardLED(opc.FILLING_LED, flipper)
-		flipper = 1 - flipper
-
-		n_pixels := len(values) / 3
+	for bytes := range bytesIn {
+		n_pixels := len(bytes) / 3
 		t := float64(time.Now().UnixNano())/1.0e9 - 1374000000
 
-		// fill in values array
+		// fill in bytes array
 		for ii := 0; ii < n_pixels; ii++ {
 			//--------------------------------------------------------------------------------
 
@@ -59,14 +55,9 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 			g := blackstripes * colorutils.Remap(math.Cos((t/speed_g+pct*freq_g)*math.Pi*2), -1, 1, 0, 1)
 			b := blackstripes * colorutils.Remap(math.Cos((t/speed_b+pct*freq_b)*math.Pi*2), -1, 1, 0, 1)
 
-			saveToSlice(values, ii, r, g, b)
+			saveFloatRgbToByteSlice(bytes, ii, r, g, b)
 			//--------------------------------------------------------------------------------
 		}
-		sliceIsFilled <- 1
+		bytesOut <- bytes
 	}
-}
-
-func main() {
-	layoutPath, ipPort, fps, timeToRun := opc.ParseFlags()
-	opc.MainLoop(pixelThread, layoutPath, ipPort, fps, timeToRun)
 }
