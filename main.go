@@ -4,6 +4,7 @@ package main
 // when we're getting pixels via our OPC server source
 
 import (
+	"bitbucket.org/davidwallace/go-metal/beaglebone"
 	"bitbucket.org/davidwallace/go-metal/opc"
 	"fmt"
 	"github.com/davecheney/profile"
@@ -118,7 +119,12 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	frameEndTime := startTime
 	framesSinceLastPrint := 0
 	firstIteration := true
+	flipper := 0
 	for {
+		// toggle LED
+		beaglebone.SetOnboardLED(0, flipper)
+		flipper = 1 - flipper
+
 		// if we have any frame budget left from last time around, sleep to control the framerate
 		if fps > 0 {
 			frameEndTime = float64(time.Now().UnixNano()) / 1.0e9
