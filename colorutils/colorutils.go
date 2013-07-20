@@ -5,6 +5,7 @@ import "math"
 //================================================================================
 // OPTIMIZATIONS
 
+// Size of cosine lookup table.
 const TABLE_SIZE = 2048
 
 var COS_LOOKUP = make([]float64, TABLE_SIZE)
@@ -28,7 +29,7 @@ func CosTable(x float64) float64 {
 	return COS_LOOKUP[ii]
 }
 
-// Like math.Mod except the result is always positive, like in Python
+// Like math.Mod except the result is always positive, like in Python.
 func PosMod(a, b float64) float64 {
 	result := math.Mod(a, b)
 	if result < 0 {
@@ -37,9 +38,9 @@ func PosMod(a, b float64) float64 {
 	return result
 }
 
-// Faster version of math.Mod(a,b) based on math.Modf
-// Less accurate, especially if b is very large or small
-// The result is always positive, like in Python
+// Faster version of math.Mod(a,b) based on math.Modf.
+// Less accurate, especially if b is very large or small.
+// The result is always positive, like in Python.
 func PosMod2(a, b float64) float64 {
 	_, f := math.Modf(a / b)
 	result := f * b
@@ -66,7 +67,7 @@ func FloatToByte(x float64) byte {
 //================================================================================
 // COLOR UTILS
 
-// Remap the float x from the range oldmin-oldmax to the range newmin-newmax
+// Remap the float x from the range oldmin-oldmax to the range newmin-newmax.
 // Does not clamp values that exceed min or max.
 // For example, to make a sine wave that goes between 0 and 256:
 //     remap(math.sin(time.time()), -1, 1, 0, 256)
@@ -80,7 +81,7 @@ func Remap(x, oldmin, oldmax, newmin, newmax float64) float64 {
 	return zero_to_one*(newmax-newmin) + newmin
 }
 
-// Restrict the float x to the range minn-maxx."""
+// Restrict the float x to the range minn-maxx.
 func Clamp(x, minn, maxx float64) float64 {
 	//return math.Max(minn, math.Min(maxx, x))
 
@@ -117,7 +118,7 @@ func Contrast(x, center, mult float64) float64 {
 	return (x-center)*mult + center
 }
 
-// Like Contrast, but on 3 channels at once
+// Like Contrast, but on 3 channels at once.
 func RGBContrast(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 float64) {
 	r2 = (r-center)*mult + center
 	g2 = (g-center)*mult + center
@@ -139,18 +140,18 @@ func ClipBlack(x, threshold float64) float64 {
 
 // Return the distance between floats a and b, modulo n.
 // The result is always non-negative.
-// For example, thinking of a clock:
-//    mod_dist(11, 1, 12) == 2 because you can "wrap around".
+// For example, thinking of a clock where you "wrap around" at 12:
+//    mod_dist(11, 1, 12) == 2
 func ModDist(a, b, n float64) float64 {
 	return math.Min(PosMod(a-b, n), PosMod(b-a, n))
 }
 
-// Like ModDist2, but using faster and less accurate Mod2
+// Like ModDist2, but using faster and less accurate Mod2.
 func ModDist2(a, b, n float64) float64 {
 	return math.Min(PosMod2(a-b, n), PosMod2(b-a, n))
 }
 
-// Apply a gamma exponent to x.  If x is negative, use 0 intsead.
+// Apply a gamma exponent to x.  If x is negative, use 0 instead.
 func Gamma(x, gamma float64) float64 {
 	if x <= 0 {
 		return 0
@@ -159,7 +160,7 @@ func Gamma(x, gamma float64) float64 {
 	}
 }
 
-// Like Gamma, but on 3 channels at once
+// Like Gamma, but on 3 channels at once.
 func RGBGamma(r, g, b, gamma float64) (float64, float64, float64) {
 	if r <= 0 {
 		r = 0

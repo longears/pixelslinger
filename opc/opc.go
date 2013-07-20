@@ -25,6 +25,7 @@ const CONNECTION_TRIES = 1
 const WAIT_TO_RETRY = 1000
 const WAIT_BETWEEN_RETRIES = 1
 
+// Display command-line help, then quit.
 func helpAndQuit() {
 	fmt.Println("--------------------------------------------------------------------------------\\")
 	fmt.Println("")
@@ -43,6 +44,8 @@ func helpAndQuit() {
 	os.Exit(0)
 }
 
+// Parse and return the command-line flags.
+// Add the default port to ipPort if needed.
 func ParseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
 	layoutPath = "layouts/freespace.json"
 	ipPort = "127.0.0.1:7890"
@@ -133,7 +136,7 @@ func ReadLocations(fn string) []float64 {
 	return locations
 }
 
-// Try to connect a couple of times
+// Try to connect a couple of times.
 // If we fail after several tries, return nil
 func getConnection(ipPort string) net.Conn {
 	fmt.Printf("[opc.getConnection] connecting to %v...\n", ipPort)
@@ -168,10 +171,10 @@ func SendingDummyThread(sendThisSlice chan []byte, sliceIsSent chan int) {
 }
 
 // Recieve byte slices over the pixelsToSend channel.
-// When we get one, write it to the SPI file descriptor and toggle one
-//  of the Beaglebone's onboard LEDs.
+// When we get one, write it to the SPI file descriptor and toggle one of the Beaglebone's onboard LEDs.
 // After sending the frame, send 1 over the sliceIsSent channel.
 // The byte slice should hold values from 0 to 255 in [r g b  r g b  r g b  ... ] order.
+// Loops until the input channel is closed.
 func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
     fmt.Println("[opc.SendingToLPD8806Thread] booting")
 
@@ -229,7 +232,7 @@ func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
 
 // Initiate and Maintain a connection to ipPort.
 // When a slice comes in through sendThisSlice, send it with an OPC header.
-// Loop forever.
+// Loops until the input channel is closed.
 func SendingToOpcThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
     fmt.Println("[opc.SendingToOpcThread] booting")
 
@@ -284,10 +287,11 @@ func SendingToOpcThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort 
 	}
 }
 
-// Launch the pixelThread and suck pixels out of it
-// Also launch the SendingToOpcThread and feed the pixels to it
-// Run until timeToRun seconds have passed
-// Set timeToRun to 0 to run forever
+// Launch the pixelThread and suck pixels out of it.
+// Also launch the SendingToOpcThread and feed the pixels to it.
+// Run until timeToRun seconds have passed.
+// Is responsible for maintaining the framerate.
+// Set timeToRun to 0 to run forever.
 // Set timeToRun to a negative to benchmark your pixelThread function by itself.
 // Set fps to the number of frames per second you want, or 0 for unlimited.
 func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ipPort string, fps float64, timeToRun float64) {
