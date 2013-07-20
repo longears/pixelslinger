@@ -1,5 +1,8 @@
 package main
 
+// TODO: figure out how to handle varying numbers of pixels
+// when we're getting pixels via our OPC server source
+
 import (
 	"bitbucket.org/davidwallace/go-metal/opc"
 	"fmt"
@@ -10,25 +13,25 @@ import (
 	"time"
 )
 
-const SPI_MAGIC_WORD = "SPI"
+const SPI_MAGIC_WORD = "spi"
+const SCREEN_MAGIC_WORD = "screen"
 const DEVNULL_MAGIC_WORD = "/dev/null"
+const OPC_LOCALHOST_MAGIC_WORD = "localhost"
 const SPI_FN = "/dev/spidev1.0"
 
 // these are pointers to the actual values from the command line parser
-var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one frame", "")
 var LAYOUT_FN = goopt.String([]string{"-l", "--layout"}, "...", "layout file (required)")
-var DEST = goopt.String([]string{"-d", "--dest"}, "localhost", "destination (either SPI, /dev/null, hostname, or hostname:port)")
+var SOURCE = goopt.String([]string{"-s", "--source"}, "spatial-stripes", "pixel source (either a pattern name or "+OPC_LOCALHOST_MAGIC_WORD+"[:port])")
+var DEST = goopt.String([]string{"-d", "--dest"}, "localhost", "destination (one of "+SCREEN_MAGIC_WORD+", "+SPI_MAGIC_WORD+", "+DEVNULL_MAGIC_WORD+", or hostname[:port])")
 var FPS = goopt.Int([]string{"-f", "--fps"}, 40, "max frames per second")
-var SECONDS = goopt.Int([]string{"-s", "--seconds"}, 0, "quit after this many seconds")
-var PATTERN_NAME = goopt.String([]string{"-p", "--pattern"}, "spatial-stripes", "pattern to show")
-
-// the pattern function we'll be running
-var PATTERN_FUNC func(bytesIn chan []byte, bytesOut chan []byte, locations []float64)
+var SECONDS = goopt.Int([]string{"-n", "--seconds"}, 0, "quit after this many seconds")
+var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one frame", "")
 
 // Parse the command line flags.  If invalid, show help and quit.
-// Add the default port to ipPort if needed.
-// Convert the PATTERN_NAME string to a function and store it in PATTERN_FUNC.
-func parseFlags() {
+// Add default ports if needed.
+// Read the layout file.
+// Return the number of pixels in the layout, the source and dest thread methods.
+func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	goopt.Summary = "Available patterns:\n"
 	goopt.Summary += "          off \n"
 	goopt.Summary += "          raver-plaid \n"
@@ -42,34 +45,51 @@ func parseFlags() {
 		os.Exit(1)
 	}
 
-	// add default port if needed
-	if *DEST != SPI_MAGIC_WORD && *DEST != DEVNULL_MAGIC_WORD && !strings.Contains(*DEST, ":") {
-		*DEST += ":7890"
-	}
+	// read locations
+	locations := opc.ReadLocations(*LAYOUT_FN)
+	nPixels = len(locations) / 3
 
-	switch *PATTERN_NAME {
+	// choose source thread method
+	switch *SOURCE {
 	case "off":
-		PATTERN_FUNC = opc.PatternOff
+		sourceThread = opc.MakePatternOff(locations)
 	case "raver-plaid":
-		PATTERN_FUNC = opc.PatternRaverPlaid
+		sourceThread = opc.MakePatternRaverPlaid(locations)
 	case "spatial-stripes":
-		PATTERN_FUNC = opc.PatternSpatialStripes
+		sourceThread = opc.MakePatternSpatialStripes(locations)
+		// todo: case localhost:7890
+		//    add port if needed
+		//    sourceThread = opc.MakeOpcServer(*SOURCE)
 	default:
-		fmt.Printf("Error: unknown pattern \"%s\"\n", *PATTERN_NAME)
+		fmt.Printf("Error: unknown source or pattern \"%s\"\n", *SOURCE)
 		fmt.Println("--------------------------------------------------------------------------------/")
 		os.Exit(1)
 	}
 
+	// choose dest thread method
+	switch *DEST {
+	case DEVNULL_MAGIC_WORD:
+		destThread = opc.MakeSendToDevNullThread()
+	case SCREEN_MAGIC_WORD:
+		destThread = opc.MakeSendToScreenThread()
+	case SPI_MAGIC_WORD:
+		destThread = opc.MakeSendToLPD8806Thread(SPI_FN)
+	default:
+		// add default port if needed
+		if !strings.Contains(*DEST, ":") {
+			*DEST += ":7890"
+		}
+		destThread = opc.MakeSendToOpcThread(*DEST)
+	}
+
+	return // returns nPixels, sourceThread, destThread
 }
 
-// Launch the given pixelThread and suck pixels out of it.
-// Also launch the SendingToOpcThread and feed the pixels to it.
-// Run until timeToRun seconds have passed.
-// Maintain the framerate.
-// destination should be an ip:port or SPI_MAGIC_WORD or DEVNULL_MAGIC_WORD.
-// Set timeToRun <= 0 to run forever.
-// Set fps to the number of frames per second you want, or <= 0 for unlimited.
-func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []float64), destination string, fps float64, timeToRun float64) {
+// Launch the sourceThread and destThread methods and coordinate the transfer of bytes from one to the other.
+// Run until timeToRun seconds have passed and return.  If timeToRun is 0, run forever.
+// Turn on the CPU profiler if timeToRun seconds > 0.
+// Limit the framerate to a max of fps unless fps is 0.
+func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64, timeToRun float64) {
 	if timeToRun > 0 {
 		fmt.Printf("[mainLoop] Running for %f seconds with profiling turned on, pixels and network\n", timeToRun)
 		defer profile.Start(profile.CPUProfile).Stop()
@@ -77,29 +97,21 @@ func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []
 		fmt.Println("[mainLoop] Running forever")
 	}
 
-	frame_budget_ms := 1000.0 / fps
-
-	n_pixels := len(locations) / 3
-	fillingSlice := make([]byte, n_pixels*3)
-	sendingSlice := make([]byte, n_pixels*3)
+	// prepare the byte slices and channels that connect the source and dest threads
+	fillingSlice := make([]byte, nPixels*3)
+	sendingSlice := make([]byte, nPixels*3)
 
 	bytesToFillChan := make(chan []byte, 0)
 	bytesFilledChan := make(chan []byte, 0)
 	bytesToSendChan := make(chan []byte, 0)
 	bytesSentChan := make(chan []byte, 0)
 
-	// start threads
-	switch destination {
-	case DEVNULL_MAGIC_WORD:
-		go opc.SendToDevNullThread(bytesToSendChan, bytesSentChan)
-	case SPI_MAGIC_WORD:
-		go opc.SendToLPD8806Thread(bytesToSendChan, bytesSentChan, SPI_FN)
-	default:
-		go opc.SendToOpcThread(bytesToSendChan, bytesSentChan, destination)
-	}
-	go pixelThread(bytesToFillChan, bytesFilledChan, locations)
+	// launch the threads
+	go sourceThread(bytesToFillChan, bytesFilledChan)
+	go destThread(bytesToSendChan, bytesSentChan)
 
 	// main loop
+	frame_budget_ms := 1000.0 / fps
 	startTime := float64(time.Now().UnixNano()) / 1.0e9
 	lastPrintTime := startTime
 	frameStartTime := startTime
@@ -117,9 +129,8 @@ func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []
 		}
 
 		// fps reporting and bookkeeping
-		frameStartTime = float64(time.Now().UnixNano()) / 1.0e9
-
 		// print framerate occasionally
+		frameStartTime = float64(time.Now().UnixNano()) / 1.0e9
 		framesSinceLastPrint += 1
 		if frameStartTime > lastPrintTime+1 {
 			lastPrintTime = frameStartTime
@@ -142,7 +153,7 @@ func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []
 
 		// if only sending one frame, let's just get it all over with now
 		//  or we'd have to compute two frames worth of pixels because of
-		//  the double buffering effect of our parallel threads
+		//  the double buffering effect of the two parallel threads
 		if *ONCE {
 			// get filled bytes and send them
 			bytesToSendChan <- <-bytesFilledChan
@@ -169,8 +180,6 @@ func main() {
 	fmt.Println("--------------------------------------------------------------------------------\\")
 	defer fmt.Println("--------------------------------------------------------------------------------/")
 
-	parseFlags()
-
-	locations := opc.ReadLocations(*LAYOUT_FN)
-	mainLoop(locations, PATTERN_FUNC, *DEST, float64(*FPS), float64(*SECONDS))
+	nPixels, sourceThread, destThread := parseFlags()
+	mainLoop(nPixels, sourceThread, destThread, float64(*FPS), float64(*SECONDS))
 }
