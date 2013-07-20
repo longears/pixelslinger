@@ -56,9 +56,9 @@ func spiThread(pixelsToSend chan []byte, sendingIsDone chan int) {
 	// open output file and keep the file descriptor around
 	spiFile, err := os.Create(SPI_FN)
 	if err != nil {
-        fmt.Println("Error opening SPI file:")
-        fmt.Println(err)
-        os.Exit(1)
+		fmt.Println("Error opening SPI file:")
+		fmt.Println(err)
+		os.Exit(1)
 		panic(err)
 	}
 	// close spiFile on exit and check for its returned error

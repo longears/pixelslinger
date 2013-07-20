@@ -31,10 +31,10 @@ func pixelThread(fillThisSlice chan []byte, sliceIsFilled chan int, locations []
 		speed_b float64 = 19
 	)
 
-    flipper := 0
+	flipper := 0
 	for values := range fillThisSlice {
-        opc.SetOnboardLED(opc.FILLING_LED, flipper)
-        flipper = 1 - flipper
+		opc.SetOnboardLED(opc.FILLING_LED, flipper)
+		flipper = 1 - flipper
 
 		n_pixels := len(values) / 3
 		t := float64(time.Now().UnixNano())/1.0e9 - 1374000000

@@ -87,7 +87,7 @@ func ParseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
 //    ledNum: between 0 and 3 inclusive
 //    val: 0 or 1.
 func SetOnboardLED(ledNum int, val int) {
-    return
+	return
 	ledFn := fmt.Sprintf("/sys/class/leds/beaglebone:green:usr%d/brightness", ledNum)
 	fmt.Println(ledFn)
 
@@ -161,13 +161,13 @@ func getConnection(ipPort string) net.Conn {
 
 func SendingDummyThread(sendThisSlice chan []byte, sliceIsSent chan int) {
 	flipper := 0
-    for _ = range sendThisSlice {
+	for _ = range sendThisSlice {
 		// toggle onboard LED
 		SetOnboardLED(SENDING_LED, flipper)
 		flipper = 1 - flipper
 
-        sliceIsSent <- 1
-    }
+		sliceIsSent <- 1
+	}
 }
 
 // Recieve byte slices over the pixelsToSend channel.
@@ -176,14 +176,14 @@ func SendingDummyThread(sendThisSlice chan []byte, sliceIsSent chan int) {
 // The byte slice should hold values from 0 to 255 in [r g b  r g b  r g b  ... ] order.
 // Loops until the input channel is closed.
 func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
-    fmt.Println("[opc.SendingToLPD8806Thread] booting")
+	fmt.Println("[opc.SendingToLPD8806Thread] booting")
 
 	// open output file and keep the file descriptor around
 	spiFile, err := os.Create(SPI_FN)
 	if err != nil {
-        fmt.Println("[opc.SendingToLPD8806Thread] Error opening SPI file:")
-        fmt.Println(err)
-        os.Exit(1)
+		fmt.Println("[opc.SendingToLPD8806Thread] Error opening SPI file:")
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	// close spiFile on exit and check for its returned error
 	defer func() {
@@ -202,7 +202,7 @@ func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
 		flipper = 1 - flipper
 
 		// build a new slice of bytes in the format the LED strand wants
-        // TODO: avoid allocating these bytes over and over
+		// TODO: avoid allocating these bytes over and over
 		bytes := make([]byte, 0)
 
 		// leading zeros to begin a new frame of values
@@ -221,10 +221,10 @@ func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
 		// final zero to latch the last pixel
 		bytes = append(bytes, 0)
 
-        // actually send bytes over the wire
-        if _, err := spiFile.Write(bytes); err != nil {
-            panic(err)
-        }
+		// actually send bytes over the wire
+		if _, err := spiFile.Write(bytes); err != nil {
+			panic(err)
+		}
 
 		sliceIsSent <- 1
 	}
@@ -234,12 +234,12 @@ func SendingToLPD8806Thread(sendThisSlice chan []byte, sliceIsSent chan int) {
 // When a slice comes in through sendThisSlice, send it with an OPC header.
 // Loops until the input channel is closed.
 func SendingToOpcThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort string) {
-    fmt.Println("[opc.SendingToOpcThread] booting")
+	fmt.Println("[opc.SendingToOpcThread] booting")
 
 	var conn net.Conn
 	var err error
 
-    flipper := 0
+	flipper := 0
 	for values := range sendThisSlice {
 		// toggle onboard LED
 		SetOnboardLED(SENDING_LED, flipper)
@@ -252,7 +252,7 @@ func SendingToOpcThread(sendThisSlice chan []byte, sliceIsSent chan int, ipPort 
 		// if that didn't work, wait a second and restart the loop
 		if conn == nil {
 			sliceIsSent <- 1
-            fmt.Println("[opc.SendingToOpcThread] waiting to retry")
+			fmt.Println("[opc.SendingToOpcThread] waiting to retry")
 			time.Sleep(WAIT_TO_RETRY * time.Millisecond)
 			continue
 		}
@@ -323,12 +323,12 @@ func MainLoop(pixelThread func(chan []byte, chan int, []float64), layoutPath, ip
 	sliceIsSent := make(chan int, 0)
 
 	// start threads
-    if ipPort == SPI_MAGIC_WORD {
-        go SendingToLPD8806Thread(sendThisSlice, sliceIsSent)
-    } else {
-        go SendingToOpcThread(sendThisSlice, sliceIsSent, ipPort)
-    }
-    go pixelThread(fillThisSlice, sliceIsFilled, locations)
+	if ipPort == SPI_MAGIC_WORD {
+		go SendingToLPD8806Thread(sendThisSlice, sliceIsSent)
+	} else {
+		go SendingToOpcThread(sendThisSlice, sliceIsSent, ipPort)
+	}
+	go pixelThread(fillThisSlice, sliceIsFilled, locations)
 
 	// main loop
 	startTime := float64(time.Now().UnixNano()) / 1.0e9
