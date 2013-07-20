@@ -121,10 +121,6 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	firstIteration := true
 	flipper := 0
 	for {
-		// toggle LED
-		beaglebone.SetOnboardLED(0, flipper)
-		flipper = 1 - flipper
-
 		// if we have any frame budget left from last time around, sleep to control the framerate
 		if fps > 0 {
 			frameEndTime = float64(time.Now().UnixNano()) / 1.0e9
@@ -142,6 +138,9 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 			lastPrintTime = frameStartTime
 			fmt.Printf("[mainLoop] %f ms/frame (%d fps)\n", 1000.0/float64(framesSinceLastPrint), framesSinceLastPrint)
 			framesSinceLastPrint = 0
+			// toggle LED
+			beaglebone.SetOnboardLED(0, flipper)
+			flipper = 1 - flipper
 		}
 
 		// if profiling, quit after a while
