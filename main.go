@@ -4,8 +4,8 @@ import (
 	"bitbucket.org/davidwallace/go-metal/opc"
 	"fmt"
 	"github.com/davecheney/profile"
+	"github.com/droundy/goopt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -14,64 +14,52 @@ const SPI_MAGIC_WORD = "SPI"
 const DEVNULL_MAGIC_WORD = "/dev/null"
 const SPI_FN = "/dev/spidev1.0"
 
-// Display command-line help, then quit.
-func helpAndQuit() {
-	// todo: once
-	fmt.Println("--------------------------------------------------------------------------------\\")
-	fmt.Println("")
-	fmt.Println("Usage:  program-name  <layout.json>  [destination  [fps  [seconds-to-run]]]")
-	fmt.Println("")
-	fmt.Println("    layout.json       A layout json file")
-	fmt.Println("    destination       Where to send the pixels.  Use one of the following values:")
-	fmt.Println("                         SPI               send directly out the SPI port")
-	fmt.Println("                         /dev/null         send nowhere")
-	fmt.Println("                         ip[:port]         send as OPC messages over the network.")
-	fmt.Println("                         hostname[:port]     (port defaults to 7890)")
-	fmt.Println("    fps               Max frames per second.  Use 0 or -1 for no limit.")
-	fmt.Println("    seconds-to-run    Quit after this many seconds.  Defaults to 0, meaning forever.")
-	fmt.Println("                        If nonzero, the profiler will be turned on.")
-	fmt.Println("")
-	fmt.Println("--------------------------------------------------------------------------------/")
-	os.Exit(0)
-}
+// these are pointers to the actual values from the command line parser
+var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one frame", "")
+var LAYOUT_FN = goopt.String([]string{"-l", "--layout"}, "...", "layout file (required)")
+var DEST = goopt.String([]string{"-d", "--dest"}, "localhost", "destination (either SPI, /dev/null, hostname, or hostname:port)")
+var FPS = goopt.Int([]string{"-f", "--fps"}, 40, "max frames per second")
+var SECONDS = goopt.Int([]string{"-s", "--seconds"}, 0, "quit after this many seconds")
+var PATTERN_NAME = goopt.String([]string{"-p", "--pattern"}, "spatial-stripes", "pattern to show")
 
-// Parse and return the command-line flags.
+// the pattern function we'll be running
+var PATTERN_FUNC func(bytesIn chan []byte, bytesOut chan []byte, locations []float64)
+
+// Parse the command line flags.  If invalid, show help and quit.
 // Add the default port to ipPort if needed.
-func parseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
-	layoutPath = "layouts/freespace.json"
-	ipPort = "127.0.0.1:7890"
-	fps = 40
-	timeToRun = 0
-	var err error
+// Convert the PATTERN_NAME string to a function and store it in PATTERN_FUNC.
+func parseFlags() {
+	goopt.Summary = "Available patterns:\n"
+	goopt.Summary += "          off \n"
+	goopt.Summary += "          raver-plaid \n"
+	goopt.Summary += "          spatial-stripes \n"
+	goopt.Parse(nil)
 
-	if len(os.Args) >= 2 {
-		if os.Args[1] == "-h" || os.Args[1] == "--help" {
-			helpAndQuit()
-		}
-		layoutPath = os.Args[1]
+	// layout is required
+	if *LAYOUT_FN == "..." {
+		fmt.Println(goopt.Usage())
+		fmt.Println("--------------------------------------------------------------------------------/")
+		os.Exit(1)
 	}
-	if len(os.Args) >= 3 {
-		ipPort = os.Args[2]
-		if ipPort != SPI_MAGIC_WORD && ipPort != DEVNULL_MAGIC_WORD && !strings.Contains(ipPort, ":") {
-			ipPort += ":7890"
-		}
+
+	// add default port if needed
+	if *DEST != SPI_MAGIC_WORD && *DEST != DEVNULL_MAGIC_WORD && !strings.Contains(*DEST, ":") {
+		*DEST += ":7890"
 	}
-	if len(os.Args) >= 4 {
-		fps, err = strconv.ParseFloat(os.Args[3], 64)
-		if err != nil {
-			helpAndQuit()
-		}
+
+	switch *PATTERN_NAME {
+	case "off":
+		PATTERN_FUNC = opc.PatternOff
+	case "raver-plaid":
+		PATTERN_FUNC = opc.PatternRaverPlaid
+	case "spatial-stripes":
+		PATTERN_FUNC = opc.PatternSpatialStripes
+	default:
+		fmt.Printf("Error: unknown pattern \"%s\"\n", *PATTERN_NAME)
+		fmt.Println("--------------------------------------------------------------------------------/")
+		os.Exit(1)
 	}
-	if len(os.Args) >= 5 {
-		timeToRun, err = strconv.ParseFloat(os.Args[4], 64)
-		if err != nil {
-			helpAndQuit()
-		}
-	}
-	if len(os.Args) >= 6 || len(os.Args) <= 1 {
-		helpAndQuit()
-	}
-	return
+
 }
 
 // Launch the given pixelThread and suck pixels out of it.
@@ -81,12 +69,12 @@ func parseFlags() (layoutPath, ipPort string, fps float64, timeToRun float64) {
 // destination should be an ip:port or SPI_MAGIC_WORD or DEVNULL_MAGIC_WORD.
 // Set timeToRun <= 0 to run forever.
 // Set fps to the number of frames per second you want, or <= 0 for unlimited.
-func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []float64), layoutPath, destination string, fps float64, timeToRun float64) {
+func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []float64), destination string, fps float64, timeToRun float64) {
 	if timeToRun > 0 {
-		fmt.Printf("[opc.mainLoop] Running for %f seconds with profiling turned on, pixels and network\n", timeToRun)
+		fmt.Printf("[mainLoop] Running for %f seconds with profiling turned on, pixels and network\n", timeToRun)
 		defer profile.Start(profile.CPUProfile).Stop()
 	} else {
-		fmt.Println("[opc.mainLoop] Running forever")
+		fmt.Println("[mainLoop] Running forever")
 	}
 
 	frame_budget_ms := 1000.0 / fps
@@ -117,7 +105,7 @@ func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []
 	frameStartTime := startTime
 	frameEndTime := startTime
 	framesSinceLastPrint := 0
-	firstTime := true
+	firstIteration := true
 	for {
 		// if we have any frame budget left from last time around, sleep to control the framerate
 		if fps > 0 {
@@ -135,7 +123,7 @@ func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []
 		framesSinceLastPrint += 1
 		if frameStartTime > lastPrintTime+1 {
 			lastPrintTime = frameStartTime
-			fmt.Printf("[opc.mainLoop] %f ms/frame (%d fps)\n", 1000.0/float64(framesSinceLastPrint), framesSinceLastPrint)
+			fmt.Printf("[mainLoop] %f ms/frame (%d fps)\n", 1000.0/float64(framesSinceLastPrint), framesSinceLastPrint)
 			framesSinceLastPrint = 0
 		}
 
@@ -148,29 +136,41 @@ func mainLoop(locations []float64, pixelThread func(chan []byte, chan []byte, []
 		// if this is the first time through the loop we have to skip
 		//  the sending stage or we'll send out a whole bunch of zeros.
 		bytesToFillChan <- fillingSlice
-		if !firstTime {
+		if !firstIteration {
 			bytesToSendChan <- sendingSlice
 		}
 
-		// wait until both are done
+		// if only sending one frame, let's just get it all over with now
+		//  or we'd have to compute two frames worth of pixels because of
+		//  the double buffering effect of our parallel threads
+		if *ONCE {
+			// get filled bytes and send them
+			bytesToSendChan <- <-bytesFilledChan
+			// wait for sending to complete
+			<-bytesSentChan
+			fmt.Println("[mainLoop] just running once.  quitting now.")
+			return
+		}
+
+		// wait until both filling and sending threads are done
 		<-bytesFilledChan
-		if !firstTime {
+		if !firstIteration {
 			<-bytesSentChan
 		}
 
 		// swap the slices
 		sendingSlice, fillingSlice = fillingSlice, sendingSlice
 
-		firstTime = false
+		firstIteration = false
 	}
 }
 
 func main() {
-	layoutPath, ipPort, fps, timeToRun := parseFlags()
-
 	fmt.Println("--------------------------------------------------------------------------------\\")
 	defer fmt.Println("--------------------------------------------------------------------------------/")
 
-	locations := opc.ReadLocations(layoutPath)
-	mainLoop(locations, opc.PatternSpatialStripes, layoutPath, ipPort, fps, timeToRun)
+	parseFlags()
+
+	locations := opc.ReadLocations(*LAYOUT_FN)
+	mainLoop(locations, PATTERN_FUNC, *DEST, float64(*FPS), float64(*SECONDS))
 }
