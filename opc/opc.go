@@ -25,7 +25,9 @@ import (
 type ByteThread func(chan []byte, chan []byte)
 
 //--------------------------------------------------------------------------------
-// NET-RELATED CONSTANTS
+// CONSTANTS
+
+const SPI_CHUNK_SIZE = 2048
 
 // Times are in milliseconds
 const CONNECTION_TRIES = 1
@@ -152,7 +154,7 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 			spiBytes := make([]byte, 0)
 
 			// leading zeros to begin a new frame of bytes
-			numZeroes := (len(bytes) / 32) + 2
+			numZeroes := (len(bytes) + 31)/32 + 1;
 			for ii := 0; ii < numZeroes*5; ii++ {
 				spiBytes = append(spiBytes, 0)
 			}
@@ -167,14 +169,21 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 			// final zero to latch the last pixel
 			spiBytes = append(spiBytes, 0)
 
-			// actually send spiBytes over the wire
-            fmt.Println("sending", len(bytes), " + ", numZeroes, " zeroes = ", len(spiBytes), "bytes")
-            for ii := 0; ii < len(spiBytes); ii++ {
-				time.Sleep(1 * time.Millisecond)
-                if _, err := spiFile.Write([]byte{spiBytes[ii]}); err != nil {
+			// write spiBytes to the wire in chunks
+            //fmt.Println("sending", len(bytes), " + ", numZeroes, " zeroes = ", len(spiBytes), "bytes")
+            bytesSent := 0
+            for ii := 0; ii < len(spiBytes); ii += SPI_CHUNK_SIZE {
+                endIndex := ii + SPI_CHUNK_SIZE
+                if endIndex > len(spiBytes) {
+                    endIndex = len(spiBytes)
+                }
+                thisChunk := spiBytes[ii:endIndex]
+                bytesSent += len(thisChunk)
+                if _, err := spiFile.Write(thisChunk); err != nil {
                     panic(err)
                 }
             }
+            fmt.Println(bytesSent,len(spiBytes))
 
 			bytesOut <- bytes
 		}
