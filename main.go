@@ -37,6 +37,7 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	goopt.Summary += "          off \n"
 	goopt.Summary += "          raver-plaid \n"
 	goopt.Summary += "          spatial-stripes \n"
+	goopt.Summary += "          test \n"
 	goopt.Parse(nil)
 
 	// layout is required
@@ -58,6 +59,8 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 		sourceThread = opc.MakePatternRaverPlaid(locations)
 	case "spatial-stripes":
 		sourceThread = opc.MakePatternSpatialStripes(locations)
+	case "test":
+		sourceThread = opc.MakePatternTest(locations)
 		// todo: case localhost:7890
 		//    add port if needed
 		//    sourceThread = opc.MakeOpcServer(*SOURCE)
