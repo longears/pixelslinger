@@ -123,6 +123,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	framesSinceLastPrint := 0
 	//firstIteration := true
 	flipper := 0
+	beaglebone.SetOnboardLED(0, 1)
 	for {
 		// if we have any frame budget left from last time around, sleep to control the framerate
 		if fps > 0 {
