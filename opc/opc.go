@@ -147,32 +147,34 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 
 		// as we get byte slices over the channel...
 		for bytes := range bytesIn {
-			fmt.Println("[opc.SendToLPD8806Thread] starting to send", len(bytes), "bytes")
-
 			// build a new slice of bytes in the format the LED strand wants
 			// TODO: avoid allocating these bytes over and over
-			bytes := make([]byte, 0)
+			spiBytes := make([]byte, 0)
 
 			// leading zeros to begin a new frame of bytes
 			numZeroes := (len(bytes) / 32) + 2
 			for ii := 0; ii < numZeroes*5; ii++ {
-				bytes = append(bytes, 0)
+				spiBytes = append(spiBytes, 0)
 			}
 
 			// bytes
 			for _, v := range bytes {
 				// high bit must be always on, remaining seven bits are data
 				v2 := 128 | (v >> 1)
-				bytes = append(bytes, v2)
+				spiBytes = append(spiBytes, v2)
 			}
 
 			// final zero to latch the last pixel
-			bytes = append(bytes, 0)
+			spiBytes = append(spiBytes, 0)
 
-			// actually send bytes over the wire
-			if _, err := spiFile.Write(bytes); err != nil {
-				panic(err)
-			}
+			// actually send spiBytes over the wire
+            fmt.Println("sending", len(bytes), " + ", numZeroes, " zeroes = ", len(spiBytes), "bytes")
+            for ii := 0; ii < len(spiBytes); ii++ {
+				time.Sleep(1 * time.Millisecond)
+                if _, err := spiFile.Write([]byte{spiBytes[ii]}); err != nil {
+                    panic(err)
+                }
+            }
 
 			bytesOut <- bytes
 		}
