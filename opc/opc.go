@@ -183,7 +183,7 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
                     panic(err)
                 }
             }
-            fmt.Println(bytesSent,len(spiBytes))
+            //fmt.Println(bytesSent,len(spiBytes))
 
 			bytesOut <- bytes
 		}
