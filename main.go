@@ -38,6 +38,8 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	goopt.Summary += "          raver-plaid \n"
 	goopt.Summary += "          spatial-stripes \n"
 	goopt.Summary += "          test \n"
+	goopt.Summary += "          test-gamma \n"
+	goopt.Summary += "          test-rgb \n"
 	goopt.Parse(nil)
 
 	// layout is required
@@ -61,6 +63,10 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 		sourceThread = opc.MakePatternSpatialStripes(locations)
 	case "test":
 		sourceThread = opc.MakePatternTest(locations)
+	case "test-gamma":
+		sourceThread = opc.MakePatternTestGamma(locations)
+	case "test-rgb":
+		sourceThread = opc.MakePatternTestRGB(locations)
 		// todo: case localhost:7890
 		//    add port if needed
 		//    sourceThread = opc.MakeOpcServer(*SOURCE)
@@ -121,7 +127,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	frameStartTime := startTime
 	frameEndTime := startTime
 	framesSinceLastPrint := 0
-	//firstIteration := true
+	firstIteration := true
 	flipper := 0
 	beaglebone.SetOnboardLED(0, 1)
 	for {
@@ -156,15 +162,14 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 		// if this is the first time through the loop we have to skip
 		//  the sending stage or we'll send out a whole bunch of zeros.
 		bytesToFillChan <- fillingSlice
-		//if !firstIteration {
-		bytesToSendChan <- sendingSlice
-		//}
+		if !firstIteration {
+			bytesToSendChan <- sendingSlice
+		}
 
 		// if only sending one frame, let's just get it all over with now
 		//  or we'd have to compute two frames worth of pixels because of
 		//  the double buffering effect of the two parallel threads
 		if *ONCE {
-			<-bytesSentChan
 			// get filled bytes and send them
 			bytesToSendChan <- <-bytesFilledChan
 			// wait for sending to complete
@@ -175,14 +180,14 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 
 		// wait until both filling and sending threads are done
 		<-bytesFilledChan
-		//if !firstIteration {
-		<-bytesSentChan
-		//}
+		if !firstIteration {
+			<-bytesSentChan
+		}
 
 		// swap the slices
 		sendingSlice, fillingSlice = fillingSlice, sendingSlice
 
-		//firstIteration = false
+		firstIteration = false
 	}
 }
 

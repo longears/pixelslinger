@@ -38,10 +38,6 @@ func MakePatternSpatialStripes(locations []float64) ByteThread {
 				g += spark_val
 				b += spark_val
 
-				// apply gamma curve
-				// only do this on live leds, not in the simulator
-				//r, g, b = colorutils.RGBGamma(r, g, b, 2.2)
-
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
 				bytes[ii*3+1] = colorutils.FloatToByte(g)
 				bytes[ii*3+2] = colorutils.FloatToByte(b)

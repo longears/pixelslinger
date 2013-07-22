@@ -3,6 +3,7 @@ package opc
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -28,6 +29,8 @@ type ByteThread func(chan []byte, chan []byte)
 // CONSTANTS
 
 const SPI_CHUNK_SIZE = 2048
+
+const GAMMA = 2.2 // for LPD chipset
 
 // Times are in milliseconds
 const CONNECTION_TRIES = 1
@@ -129,6 +132,7 @@ func MakeSendToScreenThread() ByteThread {
 // Return a ByteThread which writes bytes to SPI via the given filename (probably "/dev/spidev1.0").
 // Format the outgoing bytes for LED strips which use the LPD8806 chipset.
 // If the SPI device can't be opened, exit the whole program with exit status 1.
+// This chipset expects colors in [g r b] order; this function swaps it for you
 func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte) {
 		fmt.Println("[opc.SendToLPD8806Thread] starting up")
@@ -147,6 +151,16 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 			}
 		}()
 
+		gamma_lookup := make([]byte, 256)
+		for ii := 0; ii < 256; ii++ {
+			floatVal := math.Pow(float64(ii)/255, GAMMA)
+			if floatVal >= 1 {
+				gamma_lookup[ii] = 255
+			} else {
+				gamma_lookup[ii] = byte(floatVal * 256)
+			}
+		}
+
 		// as we get byte slices over the channel...
 		for bytes := range bytesIn {
 			// build a new slice of bytes in the format the LED strand wants
@@ -154,20 +168,33 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 			spiBytes := make([]byte, 0)
 
 			// leading zeros to begin a new frame of bytes
-			numZeroes := (len(bytes)+31)/32 + 1
+			numZeroes := (len(bytes)+31)/32 + 2
 			for ii := 0; ii < numZeroes*5; ii++ {
 				spiBytes = append(spiBytes, 0)
 			}
 
-			// bytes
-			for _, v := range bytes {
+			// actual bytes
+			//for _, v := range bytes {
+			for ii := 0; ii < len(bytes)-2; ii += 3 {
+				// apply gamma lookup table
+				r := gamma_lookup[bytes[ii+0]]
+				g := gamma_lookup[bytes[ii+1]]
+				b := gamma_lookup[bytes[ii+2]]
+				// format for LPD8806
 				// high bit must be always on, remaining seven bits are data
-				v2 := 128 | (v >> 1)
-				spiBytes = append(spiBytes, v2)
+				r = 128 | (r >> 1)
+				g = 128 | (g >> 1)
+				b = 128 | (b >> 1)
+				// swap to [g r b] order
+				spiBytes = append(spiBytes, g)
+				spiBytes = append(spiBytes, r)
+				spiBytes = append(spiBytes, b)
 			}
 
-			// final zero to latch the last pixel
-			spiBytes = append(spiBytes, 0)
+			// send some extra black pixels to make the last LEDs latch
+			for ii := 0; ii < 6; ii++ {
+				spiBytes = append(spiBytes, 128)
+			}
 
 			// write spiBytes to the wire in chunks
 			//fmt.Println("sending", len(bytes), " + ", numZeroes, " zeroes = ", len(spiBytes), "bytes")
