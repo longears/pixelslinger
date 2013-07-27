@@ -33,7 +33,7 @@ func TestMidiThread(t *testing.T) {
 
     fmt.Println("[test] getting results...")
     for midiMessage := range outCh {
-        fmt.Println(midiMessage)
+        fmt.Printf("[test]    %v\n",midiMessage)
     }
     fmt.Println("[test]     done")
 

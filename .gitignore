@@ -2,4 +2,5 @@
 *.swp
 *~
 go-opc
+main
 
