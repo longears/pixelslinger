@@ -4,6 +4,10 @@ import (
     "fmt"
 )
 
+//================================================================================
+// CONSTANTS
+
+// kinds
 const NOTE_OFF = byte(0x80)
 const NOTE_ON = byte(0x90)
 const AFTERTOUCH = byte(0xa0)
@@ -12,6 +16,14 @@ const PROGRAM_CHANGE = byte(0xc0)
 const CHANNEL_PRESSURE = byte(0xd0)
 const PITCH_BEND = byte(0xe0)
 const SYSTEM = byte(0xf0)
+
+// special channel numbers for system messages
+const CLOCK = byte(8)
+const START = byte(10)
+const STOP = byte(12)
+
+//================================================================================
+// MIDIMESSAGE TYPE
 
 type MidiMessage struct {
     kind byte // one of the constants above
@@ -60,25 +72,32 @@ func MidiThread(inCh chan byte, outCh chan *MidiMessage) {
             message.kind = b & 0xf0
             message.channel = b & 0x0f
             ii = 1
+            if message.kind == SYSTEM && (message.channel == CLOCK || message.channel == START || message.channel == STOP) {
+                debug("sending")
+                outCh <- message
+                ii = 0
+            }
             continue
         }
 
         debug("     this is a data byte")
-        if ii == 1 {
+        if ii == 0 {
+            // ignore
+            continue
+        } else if ii == 1 {
             debug("     1")
             message.key = b
             if message.kind == PROGRAM_CHANGE || message.kind == CHANNEL_PRESSURE {
-                debug(" sending")
+                debug("sending")
                 outCh <- message
                 ii = 0
-                debug(fmt.Sprintln(message))
                 continue
             }
         } else if ii == 2 {
             debug("     2")
             message.value = b
             if message.kind == NOTE_OFF || message.kind == NOTE_ON || message.kind == AFTERTOUCH || message.kind == CONTROLLER || message.kind == PITCH_BEND {
-                debug(" sending")
+                debug("sending")
                 outCh <- message
                 ii = 0
                 continue

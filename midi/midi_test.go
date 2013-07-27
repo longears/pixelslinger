@@ -46,6 +46,7 @@ func doTest(t *testing.T, bytes []byte, expectedMessageKinds []byte) {
     fmt.Println("[test] ", bytes, "-->", midiMessages)
     if len(midiMessages) != len(expectedMessageKinds) {
         t.Errorf("incorrect number of response messages")
+        return
     }
     for ii := range(midiMessages) {
         if midiMessages[ii].kind != expectedMessageKinds[ii] {
@@ -57,8 +58,17 @@ func doTest(t *testing.T, bytes []byte, expectedMessageKinds []byte) {
 
 func TestMidiThread(t *testing.T) {
     doTest(t, []byte{0x90, 60, 0}, []byte{NOTE_ON})
-    doTest(t, []byte{0x91, 60, 0}, []byte{NOTE_ON})
-    doTest(t, []byte{0x90, 31, 127, 0x90, 31, 0}, []byte{NOTE_ON,NOTE_ON})
+    doTest(t, []byte{7, 0x90, 60, 0}, []byte{NOTE_ON})
+    doTest(t, []byte{0x90, 60, 0, 7}, []byte{NOTE_ON})
+    doTest(t, []byte{0x9f, 60, 0}, []byte{NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 0x90, 31, 0}, []byte{NOTE_ON, NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 7, 0x90, 31, 0}, []byte{NOTE_ON, NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 7, 7, 7, 7, 7, 0x90, 31, 0}, []byte{NOTE_ON, NOTE_ON})
+    doTest(t, []byte{0xb0, 64, 127, 0x90, 60, 0}, []byte{CONTROLLER, NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 0xf0+CLOCK, 0x90, 31, 0}, []byte{NOTE_ON, SYSTEM, NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 0xf0+START, 0x90, 31, 0}, []byte{NOTE_ON, SYSTEM, NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 0xf0+STOP, 0x90, 31, 0}, []byte{NOTE_ON, SYSTEM, NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 0xf0, 0x90, 31, 0}, []byte{NOTE_ON, NOTE_ON})
 }
 
 
