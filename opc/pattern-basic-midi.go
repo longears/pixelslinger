@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+const MIDI_VOLUME_GAIN = 1.5    // multiply incoming midi volumes by this much
+const MIDI_BRIGHTNESS_MIN = 0.5 // midi volume 1/127, after MIDI_VOLUME_GAIN, -> this much
+const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, -> this much
+const SECONDS_TO_FADE = 1.5
+const FADING_GAIN = 0.5  // fading pixels start at this brightness
+const COLOR_BLEEDING_RAD = 3
+
 func getAvailableMidiMessages(midiMessageChan chan *midi.MidiMessage) []*midi.MidiMessage {
 	result := make([]*midi.MidiMessage, 0)
 	for {
@@ -21,10 +28,60 @@ func getAvailableMidiMessages(midiMessageChan chan *midi.MidiMessage) []*midi.Mi
 	return result
 }
 
-const MIDI_VOLUME_GAIN = 1.5    // multiply incoming midi volumes by this much
-const MIDI_BRIGHTNESS_MIN = 0.5 // midi volume 1/127, after MIDI_VOLUME_GAIN, -> this much
-const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, -> this much
-const SECONDS_TO_FADE = 1
+func pitchToRGB(pitch int) (float64, float64, float64) {
+    var r, g, b float64
+    switch pitch % 12 {
+    case 0:
+        r = 1
+        g = 0
+        b = 0
+    case 1:
+        r = 0.9
+        g = 0.4
+        b = 0
+    case 2:
+        r = 0.8
+        g = 0.8
+        b = 0
+    case 3:
+        r = 0.4
+        g = 0.9
+        b = 0
+    case 4:
+        r = 0
+        g = 1
+        b = 0
+    case 5:
+        r = 0
+        g = 0.9
+        b = 0.4
+    case 6:
+        r = 0
+        g = 0.8
+        b = 0.8
+    case 7:
+        r = 0
+        g = 0.4
+        b = 0.9
+    case 8:
+        r = 0
+        g = 0
+        b = 1
+    case 9:
+        r = 0.4
+        g = 0
+        b = 0.9
+    case 10:
+        r = 0.8
+        g = 0
+        b = 0.8
+    case 11:
+        r = 0.9
+        g = 0
+        b = 0.4
+    }
+    return r,g,b
+}
 
 func MakePatternBasicMidi(locations []float64) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
@@ -68,17 +125,46 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 				if ii < len(keyVolumes) {
 					k := keyVolumes[ii]
 					s := smoothedVolumes[ii]
+
+                    r := float64(0)
+                    g := float64(0)
+                    b := float64(0)
+                    pr, pg, pb := pitchToRGB(ii)
+
 					if k > 0 {
 						// key is currently down
-						bytes[ii*3+0] = colorutils.FloatToByte(k)
-						bytes[ii*3+1] = colorutils.FloatToByte(k)
-						bytes[ii*3+2] = colorutils.FloatToByte(k)
+                        r = pr * k
+                        g = pg * k
+                        b = pb * k
+
 					} else {
 						// key not currently down.  use smoothed value which is fading away over time
-						bytes[ii*3+0] = colorutils.FloatToByte(s)
-						bytes[ii*3+1] = colorutils.FloatToByte(0)
-						bytes[ii*3+2] = colorutils.FloatToByte(0)
+                        r = pr * s
+                        g = pg * s
+                        b = pb * s
 					}
+
+                    // color bleeding
+                    fmt.Println("")
+                    for offset := -COLOR_BLEEDING_RAD; offset <= COLOR_BLEEDING_RAD; offset++ {
+                        if (ii+offset < 0) || (ii+offset >= n_pixels) {
+                            continue
+                        }
+                        if keyVolumes[ii+offset] > 0 {
+                            brightness := float64(offset)/(float64(COLOR_BLEEDING_RAD)+1)
+                            if brightness < 0 { brightness = - brightness}
+                            brightness = 1 - brightness
+                            fmt.Println(ii, offset, brightness)
+                            pr2, pg2, pb2 := pitchToRGB(ii+offset)
+                            r += pr2 * keyVolumes[ii+offset] * brightness
+                            g += pg2 * keyVolumes[ii+offset] * brightness
+                            b += pb2 * keyVolumes[ii+offset] * brightness
+                        }
+                    }
+
+                    bytes[ii*3+0] = colorutils.FloatToByte(r)
+                    bytes[ii*3+1] = colorutils.FloatToByte(g)
+                    bytes[ii*3+2] = colorutils.FloatToByte(b)
 				} else {
 					// if we have more LEDs than MIDI keys
 					bytes[ii*3+0] = 0
