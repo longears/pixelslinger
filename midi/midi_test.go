@@ -7,39 +7,59 @@ import (
 
 //================================================================================
 
-func TestMidiThread(t *testing.T) {
-    fmt.Println("[test] beginning test")
 
-    // prepare bytes to send
-    seq := []byte{0x80, 60, 0}
+func sendAndGet(bytes []byte) []*MidiMessage {
+    //fmt.Println("[subtest] beginning test")
+
+    midiMessages := make([]*MidiMessage,0)
 
     // make channels and start thread
     inCh := make(chan byte, 1000)
     outCh := make(chan *MidiMessage, 1000)
-    fmt.Println("[test] starting thread...")
+    //fmt.Println("[subtest] starting thread...")
     go MidiThread(inCh, outCh)
-    fmt.Println("[test]     done")
+    //fmt.Println("[subtest]     done")
 
     // send bytes, close channel, get results back
-    fmt.Println("[test] sending bytes...")
-    for _,v := range seq {
+    //fmt.Println("[subtest] sending bytes...")
+    for _,v := range bytes {
         inCh <- v
     }
-    fmt.Println("[test]     done")
+    //fmt.Println("[subtest]     done")
 
-    fmt.Println("[test] closing channel...")
+    //fmt.Println("[subtest] closing channel...")
     close(inCh)
-    fmt.Println("[test]     done")
+    //fmt.Println("[subtest]     done")
 
-    fmt.Println("[test] getting results...")
+    //fmt.Println("[subtest] getting results...")
     for midiMessage := range outCh {
-        fmt.Printf("[test]    %v\n",midiMessage)
+        //fmt.Printf("[subtest]    %v\n",midiMessage)
+        midiMessages = append(midiMessages, midiMessage)
     }
-    fmt.Println("[test]     done")
-
+    //fmt.Println("[subtest]     done")
+    return midiMessages
 }
 
 
+func doTest(t *testing.T, bytes []byte, expectedMessageKinds []byte) {
+    midiMessages := sendAndGet(bytes)
+    fmt.Println("[test] ", bytes, "-->", midiMessages)
+    if len(midiMessages) != len(expectedMessageKinds) {
+        t.Errorf("incorrect number of response messages")
+    }
+    for ii := range(midiMessages) {
+        if midiMessages[ii].kind != expectedMessageKinds[ii] {
+            t.Errorf("incorrect message kind")
+        }
+    }
+}
+
+
+func TestMidiThread(t *testing.T) {
+    doTest(t, []byte{0x90, 60, 0}, []byte{NOTE_ON})
+    doTest(t, []byte{0x91, 60, 0}, []byte{NOTE_ON})
+    doTest(t, []byte{0x90, 31, 127, 0x90, 31, 0}, []byte{NOTE_ON,NOTE_ON})
+}
 
 
 //================================================================================
