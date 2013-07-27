@@ -13,9 +13,11 @@ import (
 const MIDI_VOLUME_GAIN = 1.5    // multiply incoming midi volumes by this much
 const MIDI_BRIGHTNESS_MIN = 0.5 // midi volume 1/127, after MIDI_VOLUME_GAIN, -> this much
 const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, -> this much
-const SECONDS_TO_FADE = 1.5
+const SECONDS_TO_FADE = 0.5
 const FADING_GAIN = 0.5  // fading pixels start at this brightness
 const COLOR_BLEEDING_RAD = 3
+const COLOR_BLEEDING_GAIN = 0.2
+const MIN_VISIBLE_COLOR = 0.04
 
 func getAvailableMidiMessages(midiMessageChan chan *midi.MidiMessage) []*midi.MidiMessage {
 	result := make([]*midi.MidiMessage, 0)
@@ -105,7 +107,7 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 					if m.Value == 0 {
 						keyVolumes[m.Key] = 0
 					} else {
-						keyVolumes[m.Key] = colorutils.Remap(float64(m.Value)/127*MIDI_VOLUME_GAIN, 0, 1, MIDI_BRIGHTNESS_MIN, MIDI_BRIGHTNESS_MAX)
+						keyVolumes[m.Key] = colorutils.Clamp(colorutils.Remap(float64(m.Value)/127*MIDI_VOLUME_GAIN, 0, 1, MIDI_BRIGHTNESS_MIN, MIDI_BRIGHTNESS_MAX), 0, 1)
 					}
 				}
 			}
@@ -145,21 +147,30 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 					}
 
                     // color bleeding
-                    fmt.Println("")
                     for offset := -COLOR_BLEEDING_RAD; offset <= COLOR_BLEEDING_RAD; offset++ {
-                        if (ii+offset < 0) || (ii+offset >= n_pixels) {
+                        if ii == 0 || ii+offset < 0 || ii+offset >= len(keyVolumes) {
                             continue
                         }
                         if keyVolumes[ii+offset] > 0 {
                             brightness := float64(offset)/(float64(COLOR_BLEEDING_RAD)+1)
                             if brightness < 0 { brightness = - brightness}
                             brightness = 1 - brightness
-                            fmt.Println(ii, offset, brightness)
+                            brightness *= COLOR_BLEEDING_GAIN
                             pr2, pg2, pb2 := pitchToRGB(ii+offset)
                             r += pr2 * keyVolumes[ii+offset] * brightness
                             g += pg2 * keyVolumes[ii+offset] * brightness
                             b += pb2 * keyVolumes[ii+offset] * brightness
                         }
+                    }
+
+                    if r > 0 {
+                        r = colorutils.Remap(r, 0,1, MIN_VISIBLE_COLOR,1)
+                    }
+                    if g > 0 {
+                        g = colorutils.Remap(g, 0,1, MIN_VISIBLE_COLOR,1)
+                    }
+                    if b > 0 {
+                        b = colorutils.Remap(b, 0,1, MIN_VISIBLE_COLOR,1)
                     }
 
                     bytes[ii*3+0] = colorutils.FloatToByte(r)
