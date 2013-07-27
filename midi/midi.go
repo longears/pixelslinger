@@ -40,13 +40,15 @@ func (m *MidiMessage) String() string {
     kindStr := "other"
     switch m.kind {
     case NOTE_OFF:
-        kindStr = "note-off"
+        kindStr = "NOTE_OFF"
     case NOTE_ON:
-        kindStr = "note-on"
+        kindStr = "NOTE_ON"
     case AFTERTOUCH:
-        kindStr = "aftertouch"
+        kindStr = "AFTERTOUCH"
     case CONTROLLER:
-        kindStr = "controller"
+        kindStr = "CONTROLLER"
+    case SYSTEM:
+        kindStr = "SYSTEM"
     }
     if kindStr == "other" {
         return fmt.Sprintf("(%#x ch=%v key=%v val=%v)", m.kind, m.channel, m.key, m.value)
