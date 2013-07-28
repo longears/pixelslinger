@@ -2,6 +2,11 @@ package main
 
 // TODO: figure out how to handle varying numbers of pixels
 // when we're getting pixels via our OPC server source
+//
+// implement require-midi mode
+// blink onboard LED on midi events
+// move midi loop from patterns to main loop
+//
 
 import (
 	"bitbucket.org/davidwallace/go-metal/beaglebone"
