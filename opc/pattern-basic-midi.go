@@ -11,13 +11,14 @@ import (
 )
 
 const MIDI_VOLUME_GAIN = 1.5    // multiply incoming midi volumes by this much
-const MIDI_BRIGHTNESS_MIN = 0.5 // midi volume 1/127, after MIDI_VOLUME_GAIN, -> this much
+const MIDI_BRIGHTNESS_MIN = 0.3 // midi volume 1/127, after MIDI_VOLUME_GAIN, -> this much
 const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, -> this much
-const SECONDS_TO_FADE = 0.5
-const FADING_GAIN = 0.5  // fading pixels start at this brightness
-const COLOR_BLEEDING_RAD = 3
+const SECONDS_TO_FADE = 0.3
+const FADING_GAIN = 0.3  // fading pixels start at this brightness
+const COLOR_BLEEDING_RAD = 3 // set to 0 for no bleeding
 const COLOR_BLEEDING_GAIN = 0.2
 const MIN_VISIBLE_COLOR = 0.04
+const SUSTAIN = true  // leave lights on while keys are held down
 
 func getAvailableMidiMessages(midiMessageChan chan *midi.MidiMessage) []*midi.MidiMessage {
 	result := make([]*midi.MidiMessage, 0)
@@ -32,7 +33,10 @@ func getAvailableMidiMessages(midiMessageChan chan *midi.MidiMessage) []*midi.Mi
 
 func pitchToRGB(pitch int) (float64, float64, float64) {
     var r, g, b float64
-    switch pitch % 12 {
+    pitchClass := pitch % 12
+    // circle of fifths
+    pitchClass = (pitchClass * 5+1) % 12
+    switch pitchClass {
     case 0:
         r = 1
         g = 0
@@ -101,6 +105,11 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 
 			// fetch midi messages and maintain state of keyVolumes
 			midiMessages := getAvailableMidiMessages(midiMessageChan)
+            if ! SUSTAIN {
+                for ii, _ := range keyVolumes {
+                    keyVolumes[ii] = 0
+                }
+            }
 			for _, m := range midiMessages {
 				fmt.Println("        ", m)
 				if m.Kind == midi.NOTE_ON {
@@ -131,8 +140,11 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
                     r := float64(0)
                     g := float64(0)
                     b := float64(0)
+
+                    // get color based on pitch
                     pr, pg, pb := pitchToRGB(ii)
 
+                    // apply brightness from keyVolumes or smoothedVolumes
 					if k > 0 {
 						// key is currently down
                         r = pr * k
@@ -147,22 +159,25 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 					}
 
                     // color bleeding
-                    for offset := -COLOR_BLEEDING_RAD; offset <= COLOR_BLEEDING_RAD; offset++ {
-                        if ii == 0 || ii+offset < 0 || ii+offset >= len(keyVolumes) {
-                            continue
-                        }
-                        if keyVolumes[ii+offset] > 0 {
-                            brightness := float64(offset)/(float64(COLOR_BLEEDING_RAD)+1)
-                            if brightness < 0 { brightness = - brightness}
-                            brightness = 1 - brightness
-                            brightness *= COLOR_BLEEDING_GAIN
-                            pr2, pg2, pb2 := pitchToRGB(ii+offset)
-                            r += pr2 * keyVolumes[ii+offset] * brightness
-                            g += pg2 * keyVolumes[ii+offset] * brightness
-                            b += pb2 * keyVolumes[ii+offset] * brightness
+                    if COLOR_BLEEDING_RAD > 0 {
+                        for offset := -COLOR_BLEEDING_RAD; offset <= COLOR_BLEEDING_RAD; offset++ {
+                            if ii == 0 || ii+offset < 0 || ii+offset >= len(keyVolumes) {
+                                continue
+                            }
+                            if keyVolumes[ii+offset] > 0 {
+                                brightness := float64(offset)/(float64(COLOR_BLEEDING_RAD)+1)
+                                if brightness < 0 { brightness = - brightness}
+                                brightness = 1 - brightness
+                                brightness *= COLOR_BLEEDING_GAIN
+                                pr2, pg2, pb2 := pitchToRGB(ii+offset)
+                                r += pr2 * keyVolumes[ii+offset] * brightness
+                                g += pg2 * keyVolumes[ii+offset] * brightness
+                                b += pb2 * keyVolumes[ii+offset] * brightness
+                            }
                         }
                     }
 
+                    // avoid black clipping
                     if r > 0 {
                         r = colorutils.Remap(r, 0,1, MIN_VISIBLE_COLOR,1)
                     }
