@@ -138,8 +138,8 @@ func MidiStreamParserThread(inCh chan byte, outCh chan *MidiMessage) {
 // "path" should be the path to the midi device, e.g. "/dev/midi1".
 // If the path can't be opened, it will keep retrying once a second forever until it succeeds.
 func GetMidiMessageStream(path string) chan *MidiMessage {
-	midiByteChan := make(chan byte, 1000)
-	midiMessageChan := make(chan *MidiMessage, 100)
+	midiByteChan := make(chan byte, 3000)
+	midiMessageChan := make(chan *MidiMessage, 500)
 
 	go TenaciousFileByteStreamerThread(path, midiByteChan)
 	go MidiStreamParserThread(midiByteChan, midiMessageChan)
