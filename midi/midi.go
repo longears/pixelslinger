@@ -2,6 +2,7 @@ package midi
 
 import (
 	"errors"
+    "time"
 	"fmt"
 	"os"
 )
@@ -159,6 +160,34 @@ func GetMidiMessageStream(path string) (chan *MidiMessage, error) {
 
 // Stream the bytes from the given path, one byte at a time
 // Assumes the file is a special device file which will never hit EOF.
+// If the file can't be opened, wait a bit and try again until we succeed.
+func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
+    for {
+        file, err := os.Open(path)
+        if err != nil {
+            time.Sleep(time.Duration(1 * time.Second))
+            fmt.Println("[midi] couldn't open midi device:", path, " ... waiting and trying again")
+            continue
+        }
+        defer file.Close()
+        fmt.Println("[midi] successfully opened midi device", path)
+
+        buf := make([]byte, 1)
+        for {
+            count, err := file.Read(buf)
+            if err != nil {
+                panic(err)
+            }
+            if count != 1 {
+                panic(fmt.Sprintf("count was %s", count))
+            }
+            outCh <- buf[0]
+        }
+    }
+}
+
+// Stream the bytes from the given path, one byte at a time
+// Assumes the file is a special device file which will never hit EOF.
 // If the file can't be opened, send an error over errorChan.
 // Once the file is successfully open, send a nil over errorChan.
 func FileByteStreamerThread(path string, outCh chan byte, errorChan chan error) {
@@ -182,3 +211,51 @@ func FileByteStreamerThread(path string, outCh chan byte, errorChan chan error) 
 		outCh <- buf[0]
 	}
 }
+
+//================================================================================
+// MIDISTATE TYPE
+
+// Keeps track of the current state of the keys and controllers.
+type MidiState struct {
+    KeyVolumes [128]byte
+    ControllerValues [128]byte
+    RecentMidiMessages []*MidiMessage
+}
+
+// Pull all the available MidiMessages out of the channel.  Requires a channel
+// with a buffer length greater than zero.
+func getAvailableMidiMessages(midiMessageChan chan *MidiMessage) []*MidiMessage {
+	result := make([]*MidiMessage, 0)
+	for {
+		if len(midiMessageChan) == 0 {
+			break
+		}
+		result = append(result, <-midiMessageChan)
+	}
+	return result
+}
+
+// Given a channel of MidiMessages, read all the messages that are available right now
+// and update the MidiState object.
+// Requires a channel that has a buffer length greater than zero.
+func (midiState *MidiState) UpdateStateFromChannel(midiMessageChan chan *MidiMessage) {
+    midiState.UpdateStateFromSlice(getAvailableMidiMessages(midiMessageChan))
+}
+
+// Given a slice of MidiMessages, update the MidiState object.
+// Note that MidiState.RecentMidiMessages will become a pointer to the
+// slice provided to this function; it's not a copy of the slice.
+func (midiState *MidiState) UpdateStateFromSlice(midiMessages []*MidiMessage) {
+    midiState.RecentMidiMessages = midiMessages
+    for _, m := range(midiState.RecentMidiMessages) {
+        switch m.Kind {
+        case NOTE_OFF:
+            midiState.KeyVolumes[m.Key] = 0
+        case NOTE_ON:
+            midiState.KeyVolumes[m.Key] = m.Value
+        case CONTROLLER:
+            midiState.ControllerValues[m.Key] = m.Value
+        }
+    }
+}
+
