@@ -116,9 +116,6 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 		fmt.Println("[mainLoop] Running forever")
 	}
 
-	// set up midi
-	midiMessageChan := midi.GetMidiMessageStream("/dev/midi1")
-
 	// prepare the byte slices and channels that connect the source and dest threads
 	fillingSlice := make([]byte, nPixels*3)
 	sendingSlice := make([]byte, nPixels*3)
@@ -128,9 +125,13 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	bytesToSendChan := make(chan []byte, 0)
 	bytesSentChan := make(chan []byte, 0)
 
+	// set up midi
+	midiMessageChan := midi.GetMidiMessageStream("/dev/midi1") // this launches the midi thread
+	midiState := midi.MidiState{}
+
 	// launch the threads
-	go sourceThread(bytesToFillChan, bytesFilledChan, midiMessageChan)
-	go destThread(bytesToSendChan, bytesSentChan, midiMessageChan)
+	go sourceThread(bytesToFillChan, bytesFilledChan, &midiState)
+	go destThread(bytesToSendChan, bytesSentChan, &midiState)
 
 	// main loop
 	frame_budget_ms := 1000.0 / fps
@@ -169,6 +170,9 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 		if timeToRun > 0 && frameStartTime > startTime+timeToRun {
 			return
 		}
+
+		// get midi
+		midiState.UpdateStateFromChannel(midiMessageChan)
 
 		// start the threads filling and sending slices in parallel.
 		// if this is the first time through the loop we have to skip

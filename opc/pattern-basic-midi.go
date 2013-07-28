@@ -6,30 +6,18 @@ package opc
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
 	"bitbucket.org/davidwallace/go-metal/midi"
-	"fmt"
 	"time"
 )
 
 const MIDI_VOLUME_GAIN = 1.5    // multiply incoming midi volumes by this much
-const MIDI_BRIGHTNESS_MIN = 0.3 // midi volume 1/127, after MIDI_VOLUME_GAIN, -> this much
-const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, -> this much
-const SECONDS_TO_FADE = 0.3
-const FADING_GAIN = 0.3      // fading pixels start at this brightness
-const COLOR_BLEEDING_RAD = 3 // set to 0 for no bleeding
-const COLOR_BLEEDING_GAIN = 0.2
-const MIN_VISIBLE_COLOR = 0.04
-const SUSTAIN = true // leave lights on while keys are held down
-
-func getAvailableMidiMessages(midiMessageChan chan *midi.MidiMessage) []*midi.MidiMessage {
-	result := make([]*midi.MidiMessage, 0)
-	for {
-		if len(midiMessageChan) == 0 {
-			break
-		}
-		result = append(result, <-midiMessageChan)
-	}
-	return result
-}
+const MIDI_BRIGHTNESS_MIN = 0.3 // midi volume 1/127, after MIDI_VOLUME_GAIN, is remapped to this
+const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, is remapped to this
+const SECONDS_TO_FADE = 0.3     // how long it takes to fade to black after key is lifted
+const FADING_GAIN = 0.3         // fading pixels start at their normal value * this amount
+const COLOR_BLEEDING_RAD = 3    // radius of glow effect around pressed keys.  set to 0 for no bleeding
+const COLOR_BLEEDING_GAIN = 0.2 // brightness of glow effect (range 0-1)
+const MIN_VISIBLE_COLOR = 0.04  // min pixel brightness which is actually visible (range 0-1)
+const SUSTAIN = true            // leave lights on while keys are held down
 
 func pitchToRGB(pitch int) (float64, float64, float64) {
 	var r, g, b float64
@@ -90,7 +78,7 @@ func pitchToRGB(pitch int) (float64, float64, float64) {
 }
 
 func MakePatternBasicMidi(locations []float64) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 
 		// the current volume of each key, from 0 to 1, after applying MIDI_* adjustments
 		keyVolumes := make([]float64, 128)
@@ -103,27 +91,28 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 			tDiff := colorutils.Clamp(t-last_t, 0, 5) // limit to max of 5 second to avoid pathological value at startup
 
-			// fetch midi messages and maintain state of keyVolumes
-			midiMessages := getAvailableMidiMessages(midiMessageChan)
+			// update keyVolumes from MidiState
 			if !SUSTAIN {
+				// if not sustaining, reset volumes to zero each frame
+				// causing it to be on for 1 frame only when the key is initially pressed
 				for ii, _ := range keyVolumes {
 					keyVolumes[ii] = 0
 				}
 			}
-			for _, m := range midiMessages {
-				fmt.Println("        ", m)
-				if m.Kind == midi.NOTE_ON {
-					if m.Value == 0 {
-						keyVolumes[m.Key] = 0
-					} else {
-						keyVolumes[m.Key] = colorutils.Clamp(colorutils.Remap(float64(m.Value)/127*MIDI_VOLUME_GAIN, 0, 1, MIDI_BRIGHTNESS_MIN, MIDI_BRIGHTNESS_MAX), 0, 1)
-					}
+			// read midiState into keyVolumes and apply gain adjustments
+			for ii, v := range midiState.KeyVolumes {
+				if v == 0 {
+					keyVolumes[ii] = 0
+				} else {
+					keyVolumes[ii] = colorutils.Clamp(colorutils.Remap(float64(v)/127*MIDI_VOLUME_GAIN, 0, 1, MIDI_BRIGHTNESS_MIN, MIDI_BRIGHTNESS_MAX), 0, 1)
 				}
 			}
 
-			// update smoothedVolumes: fade old values and re-apply current states
+			// update smoothedVolumes
 			for ii, v := range smoothedVolumes {
+				// fade old values
 				smoothedVolumes[ii] = colorutils.Clamp(v-tDiff/SECONDS_TO_FADE, 0, 1)
+				// re-apply current values if greater
 				if keyVolumes[ii] > smoothedVolumes[ii] {
 					smoothedVolumes[ii] = keyVolumes[ii]
 				}

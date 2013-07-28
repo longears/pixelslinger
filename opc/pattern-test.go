@@ -11,7 +11,7 @@ import (
 )
 
 func MakePatternTest(locations []float64) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		rng := rand.New(rand.NewSource(99))
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3

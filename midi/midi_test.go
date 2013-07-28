@@ -69,25 +69,18 @@ func TestMidiStreamParser(t *testing.T) {
 }
 
 //================================================================================
-/*
-func TestCosTable(t *testing.T) {
-	var correct, approx, diff float64
-	for x := -30.0; x < 30; x += 0.1387 {
-		correct = math.Cos(x)
-		approx = CosTable(x)
-		diff = math.Abs(correct - approx)
-		if diff > 0.1 {
-			t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
-		}
+
+func TestMidiState(t *testing.T) {
+	state := MidiState{}
+	midiMessages := midiBytesToMessages([]byte{7, 7, 7, 0x90, 60, 17, 0x90, 61, 13, 0x90, 61, 12, 7, 7, 7})
+	state.UpdateStateFromSlice(midiMessages)
+	if state.KeyVolumes[0] != 0 {
+		t.Errorf("state failed")
 	}
-	var bigOffset float64 = 1373963358.2 * 2 * 3.14159
-	for x := bigOffset - 30; x < bigOffset+30; x += 0.1387 {
-		correct = math.Cos(x)
-		approx = CosTable(x)
-		diff = math.Abs(correct - approx)
-		if diff > 0.1 {
-			t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
-		}
+	if state.KeyVolumes[60] != 17 {
+		t.Errorf("state failed")
+	}
+	if state.KeyVolumes[61] != 12 {
+		t.Errorf("state failed")
 	}
 }
-*/

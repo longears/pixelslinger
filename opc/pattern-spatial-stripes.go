@@ -13,7 +13,7 @@ import (
 )
 
 func MakePatternSpatialStripes(locations []float64) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8

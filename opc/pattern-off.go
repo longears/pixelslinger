@@ -7,7 +7,7 @@ import (
 )
 
 func MakePatternOff(locations []float64) ByteThread {
-	return func(bytesIn chan []byte, bytesOut chan []byte, midiMessageChan chan *midi.MidiMessage) {
+	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 			for ii := 0; ii < n_pixels; ii++ {

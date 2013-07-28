@@ -180,9 +180,9 @@ func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
 
 // Keeps track of the current state of the keys and controllers.
 type MidiState struct {
-	KeyVolumes         [128]byte
-	ControllerValues   [128]byte
-	RecentMidiMessages []*MidiMessage
+	KeyVolumes         [128]byte      // values from 0 to 127
+	ControllerValues   [128]byte      // values from 0 to 127
+	RecentMidiMessages []*MidiMessage // midi messages from the most recent call to UpdateStateXXX()
 }
 
 // Pull all the available MidiMessages out of the channel.  Requires a channel
