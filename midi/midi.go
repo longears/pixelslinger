@@ -1,7 +1,6 @@
 package midi
 
 import (
-	"errors"
     "time"
 	"fmt"
 	"os"
@@ -137,30 +136,20 @@ func MidiStreamParserThread(inCh chan byte, outCh chan *MidiMessage) {
 // Start some threads which will read and parse incoming MIDI messages in the background.
 // Return a channel which emits *MidiMessage objects.
 // "path" should be the path to the midi device, e.g. "/dev/midi1".
-// If there's an error opening the midi device file, return an error (otherwise nil) and
-// return an empty and closed channel.
-func GetMidiMessageStream(path string) (chan *MidiMessage, error) {
+// If the path can't be opened, it will keep retrying once a second forever until it succeeds.
+func GetMidiMessageStream(path string) chan *MidiMessage {
 	midiByteChan := make(chan byte, 1000)
 	midiMessageChan := make(chan *MidiMessage, 100)
-	errorChan := make(chan error)
 
-	go FileByteStreamerThread(path, midiByteChan, errorChan)
-
-	// wait until the thread has tried to open the file
-	err := <-errorChan
-	if err != nil {
-		close(midiMessageChan)
-		return midiMessageChan, err
-	}
-
+	go TenaciousFileByteStreamerThread(path, midiByteChan)
 	go MidiStreamParserThread(midiByteChan, midiMessageChan)
 
-	return midiMessageChan, nil
+	return midiMessageChan
 }
 
 // Stream the bytes from the given path, one byte at a time
 // Assumes the file is a special device file which will never hit EOF.
-// If the file can't be opened, wait a bit and try again until we succeed.
+// If the file can't be opened, it will keep trying once a second forver until it succeeds.
 func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
     for {
         file, err := os.Open(path)
@@ -184,32 +173,6 @@ func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
             outCh <- buf[0]
         }
     }
-}
-
-// Stream the bytes from the given path, one byte at a time
-// Assumes the file is a special device file which will never hit EOF.
-// If the file can't be opened, send an error over errorChan.
-// Once the file is successfully open, send a nil over errorChan.
-func FileByteStreamerThread(path string, outCh chan byte, errorChan chan error) {
-	file, err := os.Open(path)
-	if err != nil {
-		errorChan <- errors.New(fmt.Sprintf("Couldn't open file: %v", path))
-		return
-	}
-	defer file.Close()
-	errorChan <- nil
-
-	buf := make([]byte, 1)
-	for {
-		count, err := file.Read(buf)
-		if err != nil {
-			panic(err)
-		}
-		if count != 1 {
-			panic(fmt.Sprintf("count was %s", count))
-		}
-		outCh <- buf[0]
-	}
 }
 
 //================================================================================

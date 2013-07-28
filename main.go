@@ -117,10 +117,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	}
 
 	// set up midi
-	midiMessageChan, err := midi.GetMidiMessageStream("/dev/midi1")
-	if err != nil {
-		fmt.Println("[mainLoop] ERROR: could not open midi device")
-	}
+	midiMessageChan := midi.GetMidiMessageStream("/dev/midi1")
 
 	// prepare the byte slices and channels that connect the source and dest threads
 	fillingSlice := make([]byte, nPixels*3)
