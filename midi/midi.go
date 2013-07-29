@@ -9,6 +9,8 @@ import (
 //================================================================================
 // CONSTANTS
 
+const RETRY_WAIT = 1 // seconds to wait before retrying opening midi device
+
 // kinds
 const NOTE_OFF = byte(0x80)
 const NOTE_ON = byte(0x90)
@@ -154,7 +156,7 @@ func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
 	for {
 		file, err := os.Open(path)
 		if err != nil {
-			time.Sleep(time.Duration(1 * time.Second))
+			time.Sleep(time.Duration(RETRY_WAIT * time.Second))
 			fmt.Println("[midi] couldn't open midi device:", path, " ... waiting and trying again")
 			continue
 		}
@@ -165,12 +167,12 @@ func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
 		for {
 			count, err := file.Read(buf)
 			if err != nil {
-                fmt.Println("[midi] couldn't read from midi device:", path)
-                fmt.Println(err)
-                break
+				fmt.Println("[midi] couldn't read from midi device:", path)
+				fmt.Println(err)
+				break
 			}
 			if count != 1 {
-                panic(fmt.Sprintf("[midi] ERROR: when reading, read %s bytes instead of 1", count))
+				panic(fmt.Sprintf("[midi] ERROR: when reading, read %s bytes instead of 1", count))
 			}
 			outCh <- buf[0]
 		}

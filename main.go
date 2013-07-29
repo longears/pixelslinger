@@ -2,11 +2,6 @@ package main
 
 // TODO: figure out how to handle varying numbers of pixels
 // when we're getting pixels via our OPC server source
-//
-// implement require-midi mode
-// blink onboard LED on midi events
-// move midi loop from patterns to main loop
-//
 
 import (
 	"bitbucket.org/davidwallace/go-metal/beaglebone"
@@ -176,11 +171,11 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 
 		// get midi
 		midiState.UpdateStateFromChannel(midiMessageChan)
-        if len(midiState.RecentMidiMessages) > 0 {
-            beaglebone.SetOnboardLED(ONBOARD_LED_MIDI, 1)
-        } else {
-            beaglebone.SetOnboardLED(ONBOARD_LED_MIDI, 0)
-        }
+		if len(midiState.RecentMidiMessages) > 0 {
+			beaglebone.SetOnboardLED(ONBOARD_LED_MIDI, 1)
+		} else {
+			beaglebone.SetOnboardLED(ONBOARD_LED_MIDI, 0)
+		}
 
 		// start the threads filling and sending slices in parallel.
 		// if this is the first time through the loop we have to skip
