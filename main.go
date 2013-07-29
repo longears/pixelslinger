@@ -39,6 +39,7 @@ var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one fram
 func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	goopt.Summary = "Available patterns:\n"
 	goopt.Summary += "          basic-midi \n"
+	goopt.Summary += "          fire \n"
 	goopt.Summary += "          off \n"
 	goopt.Summary += "          raver-plaid \n"
 	goopt.Summary += "          spatial-stripes \n"
@@ -62,6 +63,8 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	switch *SOURCE {
 	case "basic-midi":
 		sourceThread = opc.MakePatternBasicMidi(locations)
+	case "fire":
+		sourceThread = opc.MakePatternFire(locations)
 	case "off":
 		sourceThread = opc.MakePatternOff(locations)
 	case "raver-plaid":
