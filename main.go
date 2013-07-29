@@ -20,6 +20,9 @@ import (
 	"time"
 )
 
+const ONBOARD_LED_HEARTBEAT = 0
+const ONBOARD_LED_MIDI = 1
+
 const SPI_MAGIC_WORD = "spi"
 const SCREEN_MAGIC_WORD = "screen"
 const DEVNULL_MAGIC_WORD = "/dev/null"
@@ -162,7 +165,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 			fmt.Printf("[mainLoop] %f ms/frame (%d fps)\n", 1000.0/float64(framesSinceLastPrint), framesSinceLastPrint)
 			framesSinceLastPrint = 0
 			// toggle LED
-			beaglebone.SetOnboardLED(0, flipper)
+			beaglebone.SetOnboardLED(ONBOARD_LED_HEARTBEAT, flipper)
 			flipper = 1 - flipper
 		}
 
@@ -173,6 +176,11 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 
 		// get midi
 		midiState.UpdateStateFromChannel(midiMessageChan)
+        if len(midiState.RecentMidiMessages) > 0 {
+            beaglebone.SetOnboardLED(ONBOARD_LED_MIDI, 1)
+        } else {
+            beaglebone.SetOnboardLED(ONBOARD_LED_MIDI, 0)
+        }
 
 		// start the threads filling and sending slices in parallel.
 		// if this is the first time through the loop we have to skip
