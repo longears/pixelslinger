@@ -9,7 +9,7 @@ import (
 //================================================================================
 // CONSTANTS
 
-const RETRY_WAIT = 1 // seconds to wait before retrying opening midi device
+const RETRY_WAIT = 2 // seconds to wait before retrying opening midi device
 
 // kinds
 const NOTE_OFF = byte(0x80)
