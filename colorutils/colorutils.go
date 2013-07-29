@@ -50,6 +50,13 @@ func PosMod2(a, b float64) float64 {
 	return result
 }
 
+func Abs(a float64) float64 {
+    if a > 0 {
+        return a
+    }
+    return -a
+}
+
 //================================================================================
 // HELPERS
 

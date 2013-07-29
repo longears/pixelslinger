@@ -19,7 +19,6 @@ func MakePatternFire(locations []float64) ByteThread {
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
-			_ = t
 
             // slow down time a bit
             t *= SPEED
