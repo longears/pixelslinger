@@ -1,7 +1,8 @@
 package opc
 
-// Raver plaid
-//   A rainbowy pattern with moving diagonal black stripes
+// Fire
+//   Make a burning fire pattern.
+//   This pattern is scaled to fit the layout from top to bottom (z).
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
@@ -9,6 +10,9 @@ import (
     "math"
 	"time"
 )
+
+const SPEED = 0.83      // How quick are the flames?
+const SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
 
 func MakePatternFire(locations []float64) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
@@ -18,7 +22,7 @@ func MakePatternFire(locations []float64) ByteThread {
 			_ = t
 
             // slow down time a bit
-            t *= 0.83
+            t *= SPEED
 
             // get bounding box
             var max_coord_x, max_coord_y, max_coord_z float64
@@ -47,9 +51,11 @@ func MakePatternFire(locations []float64) ByteThread {
                 // scale the height (z) of the layout to fit in the range 0-1
                 // and scale x and y accordingly
                 z_scale := max_coord_z - min_coord_z
-                side_scale := 1.7 // smaller numbers compress things horizontally
-                xp := x / z_scale / side_scale
-                yp := y / z_scale / side_scale
+                if z_scale == 0 { // avoid divide by zero
+                    z_scale = 0.05
+                }
+                xp := x / z_scale / SIDE_SCALE
+                yp := y / z_scale / SIDE_SCALE
                 zp := (z-min_coord_z) / z_scale
 
                 // bend space so that things seem to accelerate upwards

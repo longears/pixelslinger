@@ -1,7 +1,8 @@
 package opc
 
-// Raver plaid
-//   A rainbowy pattern with moving diagonal black stripes
+// Basic Midi
+//   Turns on one LED for each of the 128 MIDI pitches when that node is being played.
+//   LEDs are colored in rainbow order according to the circle of fifths.
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"

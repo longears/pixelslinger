@@ -1,7 +1,10 @@
 package opc
 
-// Raver plaid
-//   A rainbowy pattern with moving diagonal black stripes
+// Test RGB
+//   Pattern for testing the RGB order of LED strips.
+//   Emits these colors to the first 6 LEDs:
+//      red, green, blue, black, white, black
+//   For the rest of the pixels it makes a slowly moving red and black sine wave.
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"

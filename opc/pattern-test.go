@@ -1,7 +1,15 @@
 package opc
 
-// Raver plaid
-//   A rainbowy pattern with moving diagonal black stripes
+// Test
+//   General purpose test pattern.
+//   Cycles between three modes:
+//      0. set the entire strip to the same random color each frame
+//      1. repeat these 4 colors down the strand: red green blue white
+//      2. ruler mode for counting LEDs
+//   Ruler mode:
+//      The first LED of each chunk of 32 is red
+//      The last of each chunk is green
+//      Every 8th LED is dark blue
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"
@@ -51,7 +59,7 @@ func MakePatternTest(locations []float64) ByteThread {
 				// mode 2: count the leds
 				// the first of each chunk of 32 leds is red
 				// the last of each chunk is green
-				// every 8th led is a bit blue
+				// every 8th led is dark blue
 				if int(t/3)%3 == 2 {
 					r = 0
 					g = 0

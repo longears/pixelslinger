@@ -1,7 +1,8 @@
 package opc
 
-// Raver plaid
-//   A rainbowy pattern with moving diagonal black stripes
+// Test Gamma
+//   A rainbowy pattern which makes it easy to see if the gamma is set correctly.
+//   This pattern should look saturated, not pastel with cyan-yellow-mageta overtones.
 
 import (
 	"bitbucket.org/davidwallace/go-metal/colorutils"

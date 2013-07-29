@@ -1,6 +1,7 @@
 package opc
 
-// Solid black
+// Off
+//   Set all pixels to black.
 
 import (
 	"bitbucket.org/davidwallace/go-metal/midi"
