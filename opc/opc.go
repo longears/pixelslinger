@@ -276,3 +276,65 @@ func MakeSendToOpcThread(ipPort string) ByteThread {
 		}
 	}
 }
+
+//--------------------------------------------------------------------------------
+// OPC SERVER
+
+type OpcMessage struct {
+    Channel byte
+    Command byte
+    Bytes []byte
+}
+
+func handleOpcConnection(conn net.Conn, incomingOpcMessageChan chan *OpcMessage) {
+    for {
+        // get header
+        headerBuf := make([]byte, 4)
+        n, err := conn.Read(headerBuf)
+        if err != nil {
+            return  // err is EOF hopefully
+        }
+        if n != 4 {
+            panic(fmt.Sprintf("header should be 4 bytes long, got %v", n))
+        }
+        channel := headerBuf[0]
+        command := headerBuf[1]
+        length := int(headerBuf[2]) << 8 + int(headerBuf[3])
+
+        // get data
+        dataBuf := make([]byte, length)
+        //data := make([]byte, length)
+        //bytesSoFar := 0
+        n, err = conn.Read(dataBuf)
+        if err != nil {
+            panic(err)
+        }
+        if n != length {
+            panic(fmt.Sprintf("expected %v bytes of data, got %v", length, n))
+        }
+
+        incomingOpcMessageChan <- &OpcMessage{channel, command, dataBuf}
+    }
+}
+
+func OpcServerThread(ipPort string, incomingOpcMessageChan chan *OpcMessage) {
+    fmt.Println("[opc] OPC server thread is listening on", ipPort)
+    listen, err := net.Listen("tcp", ":7890")
+    if err != nil {
+        panic(err)
+    }
+    for {
+        conn, err := listen.Accept()
+        if err != nil {
+            panic(err)
+        }
+        go handleOpcConnection(conn, incomingOpcMessageChan)
+    }
+}
+
+func LaunchOpcServer(ipPort string) chan *OpcMessage {
+    incomingOpcMessageChan := make(chan *OpcMessage, 0)
+    go OpcServerThread(ipPort, incomingOpcMessageChan)
+    return incomingOpcMessageChan
+}
+
