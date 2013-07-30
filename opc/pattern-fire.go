@@ -15,6 +15,22 @@ const SPEED = 0.83      // How quick are the flames?
 const SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
 
 func MakePatternFire(locations []float64) ByteThread {
+    // get bounding box
+    n_pixels := len(locations) / 3
+    var max_coord_x, max_coord_y, max_coord_z float64
+    var min_coord_x, min_coord_y, min_coord_z float64
+    for ii := 0; ii < n_pixels; ii++ {
+        x := locations[ii*3+0]
+        y := locations[ii*3+1]
+        z := locations[ii*3+2]
+        if ii == 0 || x > max_coord_x { max_coord_x = x }
+        if ii == 0 || y > max_coord_y { max_coord_y = y }
+        if ii == 0 || z > max_coord_z { max_coord_z = z }
+        if ii == 0 || x < min_coord_x { min_coord_x = x }
+        if ii == 0 || y < min_coord_y { min_coord_y = y }
+        if ii == 0 || z < min_coord_z { min_coord_z = z }
+    }
+
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
@@ -22,21 +38,6 @@ func MakePatternFire(locations []float64) ByteThread {
 
             // slow down time a bit
             t *= SPEED
-
-            // get bounding box
-            var max_coord_x, max_coord_y, max_coord_z float64
-            var min_coord_x, min_coord_y, min_coord_z float64
-            for ii := 0; ii < n_pixels; ii++ {
-                x := locations[ii*3+0]
-                y := locations[ii*3+1]
-                z := locations[ii*3+2]
-                if ii == 0 || x > max_coord_x { max_coord_x = x }
-                if ii == 0 || y > max_coord_y { max_coord_y = y }
-                if ii == 0 || z > max_coord_z { max_coord_z = z }
-                if ii == 0 || x < min_coord_x { min_coord_x = x }
-                if ii == 0 || y < min_coord_y { min_coord_y = y }
-                if ii == 0 || z < min_coord_z { min_coord_z = z }
-            }
 
 			// fill in bytes array
 			var r, g, b float64
