@@ -286,7 +286,15 @@ type OpcMessage struct {
     Bytes []byte
 }
 
+// Read a series of OPC messages as bytes from the net connection, convert them into OpcMessage
+// objects, and push pointers to those objects over the channel.
 func handleOpcConnection(conn net.Conn, incomingOpcMessageChan chan *OpcMessage) {
+    // OPC protocol:
+    // byte 0: channel number
+    // byte 1: command
+    // byte 2: length (high byte)
+    // byte 3: length (low byte)
+    // bytes 4...: data in R G B order
     for {
         // get header
         headerBuf := make([]byte, 4)
@@ -303,8 +311,7 @@ func handleOpcConnection(conn net.Conn, incomingOpcMessageChan chan *OpcMessage)
 
         // get data
         dataBuf := make([]byte, length)
-        //data := make([]byte, length)
-        //bytesSoFar := 0
+        // TODO: test this with length == 0
         n, err = conn.Read(dataBuf)
         if err != nil {
             panic(err)
@@ -317,6 +324,9 @@ func handleOpcConnection(conn net.Conn, incomingOpcMessageChan chan *OpcMessage)
     }
 }
 
+// You should launch this in its own goroutine.
+// Start a server at ipPort (or, for example, ":7890") and push received *OpcMessage pointers over
+// the incomingOpcMessageChan.
 func OpcServerThread(ipPort string, incomingOpcMessageChan chan *OpcMessage) {
     fmt.Println("[opc] OPC server thread is listening on", ipPort)
     listen, err := net.Listen("tcp", ":7890")
@@ -332,6 +342,8 @@ func OpcServerThread(ipPort string, incomingOpcMessageChan chan *OpcMessage) {
     }
 }
 
+// Launch the OPC server in its own goroutine and return the channel over which it
+// will push incoming OPC messages.
 func LaunchOpcServer(ipPort string) chan *OpcMessage {
     incomingOpcMessageChan := make(chan *OpcMessage, 0)
     go OpcServerThread(ipPort, incomingOpcMessageChan)
