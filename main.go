@@ -40,6 +40,7 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	goopt.Summary = "Available patterns:\n"
 	goopt.Summary += "          basic-midi \n"
 	goopt.Summary += "          fire \n"
+	goopt.Summary += "          moire \n"
 	goopt.Summary += "          off \n"
 	goopt.Summary += "          raver-plaid \n"
 	goopt.Summary += "          sailor-moon \n"
@@ -66,6 +67,8 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 		sourceThread = opc.MakePatternBasicMidi(locations)
 	case "fire":
 		sourceThread = opc.MakePatternFire(locations)
+	case "moire":
+		sourceThread = opc.MakePatternMoire(locations)
 	case "off":
 		sourceThread = opc.MakePatternOff(locations)
 	case "raver-plaid":
