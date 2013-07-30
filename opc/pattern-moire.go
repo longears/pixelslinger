@@ -51,24 +51,23 @@ func MakePatternMoire(locations []float64) ByteThread {
 			for ii := 0; ii < n_pixels; ii++ {
 				//--------------------------------------------------------------------------------
 
-				// make moving stripes for x, y, and z
-				x := locations[ii*3+0]
-				y := locations[ii*3+1]
-				z := locations[ii*3+2]
+				//// make moving stripes for x, y, and z
+				//x := locations[ii*3+0]
+				//y := locations[ii*3+1]
+				//z := locations[ii*3+2]
 
-				xPeriod := colorutils.Remap(x, min_coord_x, max_coord_x, MIN_PERIOD, MAX_PERIOD)
-				yPeriod := colorutils.Remap(y, min_coord_y, max_coord_y, MIN_PERIOD, MAX_PERIOD)
-				zPeriod := colorutils.Remap(z, min_coord_z, max_coord_z, MIN_PERIOD, MAX_PERIOD)
+				//period := colorutils.Remap(x, min_coord_x, max_coord_x, MIN_PERIOD, MAX_PERIOD)
+                rPeriod := 1/float64(ii+10)
+                gPeriod := 1/float64((ii+160/3)%160+10)
+                bPeriod := 1/float64((ii+2*160/3)%160+10)
 
 				// offset, period, minn, maxx
-				r := colorutils.Cos2(t, 0, xPeriod, 0, 1)
-				g := colorutils.Cos2(t, 0, yPeriod, 0, 1)
-				b := colorutils.Cos2(t, 0, zPeriod, 0, 1)
-				_ = r
-				_ = g
+				r := colorutils.Cos(t * 0.1, 0, rPeriod, 0, 1)
+				g := colorutils.Cos(t * 0.1, 0.11, gPeriod, 0, 1)
+				b := colorutils.Cos(t * 0.1, 0.37, bPeriod, 0, 1)
 
-				bytes[ii*3+0] = colorutils.FloatToByte(b)
-				bytes[ii*3+1] = colorutils.FloatToByte(b)
+				bytes[ii*3+0] = colorutils.FloatToByte(r)
+				bytes[ii*3+1] = colorutils.FloatToByte(g)
 				bytes[ii*3+2] = colorutils.FloatToByte(b)
 
 				//--------------------------------------------------------------------------------
