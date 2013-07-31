@@ -19,6 +19,12 @@ Pixel destinations
 * `--dest hostname:port` -- Send Open Pixel Control messages to the given machine
 * `--dest /dev/null` -- Send pixels nowhere.  Useful for benchmarking pixel sources.
 
+To add more animation patterns
+------------------------------
+
+Start by copying and renaming `opc/pattern-raver-plaid.go`.
+Also add your pattern to the `PATTERN_REGISTRY` map in `opc/opc.go` so you can choose it from the command line.
+
 Developer documentation
 -----------------------
 
