@@ -19,6 +19,11 @@ Pixel destinations
 * `--dest hostname:port` -- Send Open Pixel Control messages to the given machine
 * `--dest /dev/null` -- Send pixels nowhere.  Useful for benchmarking pixel sources.
 
+Developer documentation
+-----------------------
+
+http://godoc.org/github.com/longears/pixelslinger
+
 Usage
 -----
 
