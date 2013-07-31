@@ -5,8 +5,8 @@ package opc
 //   LEDs are colored in rainbow order according to the circle of fifths.
 
 import (
-	"bitbucket.org/davidwallace/pixelslinger/colorutils"
-	"bitbucket.org/davidwallace/pixelslinger/midi"
+	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/midi"
 	"time"
 )
 

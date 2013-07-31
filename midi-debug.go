@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"fmt"
+	"github.com/longears/pixelslinger/midi"
 )
 
 func main() {

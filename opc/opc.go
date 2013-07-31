@@ -4,9 +4,9 @@ Package opc helps you send and receive Open Pixel Control messages.
 package opc
 
 import (
-	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"bufio"
 	"fmt"
+	"github.com/longears/pixelslinger/midi"
 	"math"
 	"net"
 	"os"

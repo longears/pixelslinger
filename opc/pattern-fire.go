@@ -5,8 +5,8 @@ package opc
 //   This pattern is scaled to fit the layout from top to bottom (z).
 
 import (
-	"bitbucket.org/davidwallace/pixelslinger/colorutils"
-	"bitbucket.org/davidwallace/pixelslinger/midi"
+	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/midi"
     "math"
 	"time"
 )

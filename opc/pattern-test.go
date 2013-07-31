@@ -12,8 +12,8 @@ package opc
 //      Every 8th LED is dark blue
 
 import (
-	"bitbucket.org/davidwallace/pixelslinger/colorutils"
-	"bitbucket.org/davidwallace/pixelslinger/midi"
+	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/midi"
 	"math/rand"
 	"time"
 )

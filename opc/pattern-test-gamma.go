@@ -5,8 +5,8 @@ package opc
 //   This pattern should look saturated, not pastel with cyan-yellow-mageta overtones.
 
 import (
-	"bitbucket.org/davidwallace/pixelslinger/colorutils"
-	"bitbucket.org/davidwallace/pixelslinger/midi"
+	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/midi"
 	"time"
 )
 
