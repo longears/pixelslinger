@@ -38,17 +38,20 @@ var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one fram
 // Read the layout file.
 // Return the number of pixels in the layout, the source and dest thread methods.
 func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
-	goopt.Summary = "Available patterns:\n"
-	goopt.Summary += "          basic-midi \n"
-	goopt.Summary += "          fire \n"
-	goopt.Summary += "          moire \n"
-	goopt.Summary += "          off \n"
-	goopt.Summary += "          raver-plaid \n"
-	goopt.Summary += "          sailor-moon \n"
-	goopt.Summary += "          spatial-stripes \n"
-	goopt.Summary += "          test \n"
-	goopt.Summary += "          test-gamma \n"
-	goopt.Summary += "          test-rgb \n"
+
+	// get sorted pattern names
+	patternNames := make([]string, len(opc.PATTERN_REGISTRY))
+	ii := 0
+	for k, _ := range opc.PATTERN_REGISTRY {
+		patternNames[ii] = k
+		ii++
+	}
+	sort.Strings(patternNames)
+
+	goopt.Summary = "Available source patterns:\n"
+	for _, patternName := range patternNames {
+		goopt.Summary += "          " + patternName + "\n"
+	}
 	goopt.Parse(nil)
 
 	// layout is required
@@ -63,35 +66,16 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	nPixels = len(locations) / 3
 
 	// choose source thread method
-	switch *SOURCE {
-	case "basic-midi":
-		sourceThread = opc.MakePatternBasicMidi(locations)
-	case "fire":
-		sourceThread = opc.MakePatternFire(locations)
-	case "moire":
-		sourceThread = opc.MakePatternMoire(locations)
-	case "off":
-		sourceThread = opc.MakePatternOff(locations)
-	case "raver-plaid":
-		sourceThread = opc.MakePatternRaverPlaid(locations)
-	case "sailor-moon":
-		sourceThread = opc.MakePatternSailorMoon(locations)
-	case "spatial-stripes":
-		sourceThread = opc.MakePatternSpatialStripes(locations)
-	case "test":
-		sourceThread = opc.MakePatternTest(locations)
-	case "test-gamma":
-		sourceThread = opc.MakePatternTestGamma(locations)
-	case "test-rgb":
-		sourceThread = opc.MakePatternTestRGB(locations)
-		// todo: case localhost:7890
-		//    add port if needed
-		//    sourceThread = opc.MakeOpcServer(*SOURCE)
-	default:
+	// todo: case localhost:7890
+	//    add port if needed
+	//    sourceThread = opc.MakeOpcServer(*SOURCE)
+	sourceThreadMaker, ok := opc.PATTERN_REGISTRY[*SOURCE]
+	if !ok {
 		fmt.Printf("Error: unknown source or pattern \"%s\"\n", *SOURCE)
 		fmt.Println("--------------------------------------------------------------------------------/")
 		os.Exit(1)
 	}
+	sourceThread = sourceThreadMaker(locations)
 
 	// choose dest thread method
 	switch *DEST {

@@ -16,6 +16,22 @@ import (
 )
 
 //--------------------------------------------------------------------------------
+// PATTERN REGISTRY
+
+var PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
+	"basic-midi":      MakePatternBasicMidi,
+	"fire":            MakePatternFire,
+	"moire":           MakePatternMoire,
+	"off":             MakePatternOff,
+	"raver-plaid":     MakePatternRaverPlaid,
+	"sailor-moon":     MakePatternSailorMoon,
+	"spatial-stripes": MakePatternSpatialStripes,
+	"test":            MakePatternTest,
+	"test-gamma":      MakePatternTestGamma,
+	"test-rgb":        MakePatternTestRGB,
+}
+
+//--------------------------------------------------------------------------------
 // TYPES
 
 // Most of this library is built from ByteThread functions which you can
