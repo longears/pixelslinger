@@ -1,3 +1,12 @@
+/*
+Package colorutils provides helper functions for manipulating colors.
+
+All of the float-valued functions assume that normal RGB values are between 0 and 1, but generally
+they accept larger or smaller values than that.
+
+Some of these are optimized versions of functions from the built-in math package.  They're
+faster because they don't check for special cases like infinity and Nan.
+*/
 package colorutils
 
 import "math"
@@ -50,6 +59,7 @@ func PosMod2(a, b float64) float64 {
 	return result
 }
 
+// Faster version of math.Abs(a).
 func Abs(a float64) float64 {
     if a > 0 {
         return a
@@ -61,6 +71,7 @@ func Abs(a float64) float64 {
 // HELPERS
 
 // Given a float in the range 0-1, return a byte from 0 to 255.
+// Clamp out-of-range values at 0 or 255.
 func FloatToByte(x float64) byte {
 	if x >= 1 {
 		return 255
@@ -111,7 +122,7 @@ func Cos(x, offset, period, minn, maxx float64) float64 {
 	return value*(maxx-minn) + minn
 }
 
-// Like Cos, but using a lookup table.
+// Like Cos, but using a lookup table for speed.
 func Cos2(x, offset, period, minn, maxx float64) float64 {
 	var value = CosTable((x/period-offset)*math.Pi*2)/2 + 0.5
 	return value*(maxx-minn) + minn
@@ -147,18 +158,19 @@ func ClipBlack(x, threshold float64) float64 {
 
 // Return the distance between floats a and b, modulo n.
 // The result is always non-negative.
-// For example, thinking of a clock where you "wrap around" at 12:
-//    mod_dist(11, 1, 12) == 2
+// For example, thinking of a clock where you "wrap around" at 12, the distance
+// between 1 and 11 is two hours:
+//    modDist(11, 1, 12) == 2
 func ModDist(a, b, n float64) float64 {
 	return math.Min(PosMod(a-b, n), PosMod(b-a, n))
 }
 
-// Like ModDist2, but using faster and less accurate Mod2.
+// Like ModDist2, but using faster and less accurate Mod2 instead of math.Mod.
 func ModDist2(a, b, n float64) float64 {
 	return math.Min(PosMod2(a-b, n), PosMod2(b-a, n))
 }
 
-// Apply a gamma exponent to x.  If x is negative, use 0 instead.
+// Apply a gamma exponent to x.  If x is negative, return 0.
 func Gamma(x, gamma float64) float64 {
 	if x <= 0 {
 		return 0

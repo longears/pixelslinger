@@ -1,3 +1,6 @@
+/*
+Package opc helps you send and receive Open Pixel Control messages.
+*/
 package opc
 
 import (
@@ -31,19 +34,20 @@ type ByteThread func(chan []byte, chan []byte, *midi.MidiState)
 //--------------------------------------------------------------------------------
 // CONSTANTS
 
+// How many bytes can be written to the SPI bus at once?
 const SPI_CHUNK_SIZE = 2048
 
-const GAMMA = 2.2 // for LPD chipset
+// Gamma for LPD chipset
+const GAMMA = 2.2
 
-// Times are in milliseconds
-const CONNECTION_TRIES = 1
-const WAIT_TO_RETRY = 1000
-const WAIT_BETWEEN_RETRIES = 1
+const CONNECTION_TRIES = 1   // milliseconds
+const WAIT_TO_RETRY = 1000   // milliseconds
+const WAIT_BETWEEN_RETRIES = 1  // milliseconds
 
 //--------------------------------------------------------------------------------
 // OPC LAYOUT FORMAT
 
-// Read locations from JSON file into a slice of floats
+// Read locations from OPC-style JSON layout file into a slice of floats
 func ReadLocations(fn string) []float64 {
 	locations := make([]float64, 0)
 	var file *os.File
@@ -74,8 +78,8 @@ func ReadLocations(fn string) []float64 {
 //--------------------------------------------------------------------------------
 // NET HELPERS
 
-// Try to connect.  Retry several times in a row if needed.
-// On failure, return nil.
+// Try to connect to the given ipPort.  Retry several times in a row if needed,
+// waiting WAIT_BETWEEN_RETRIES each time.  On failure, return nil.
 func getConnection(ipPort string) net.Conn {
 	fmt.Printf("[opc.getConnection] connecting to %v...\n", ipPort)
 	triesLeft := CONNECTION_TRIES
@@ -101,7 +105,7 @@ func getConnection(ipPort string) net.Conn {
 //--------------------------------------------------------------------------------
 // SENDING GOROUTINES
 
-// Returns a ByteThread which passes byte slices from the input to
+// Return a ByteThread which passes byte slices from the input to
 // the output channels without doing anything.
 func MakeSendToDevNullThread() ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
@@ -132,10 +136,11 @@ func MakeSendToScreenThread() ByteThread {
 	}
 }
 
-// Return a ByteThread which writes bytes to SPI via the given filename (probably "/dev/spidev1.0").
+// Return a ByteThread which writes bytes to SPI via the given filename (such as "/dev/spidev1.0").
 // Format the outgoing bytes for LED strips which use the LPD8806 chipset.
 // If the SPI device can't be opened, exit the whole program with exit status 1.
-// This chipset expects colors in [g r b] order; this function swaps it for you
+// This chipset expects colors in G R B order; this function is responsible for swapping from
+// the usual R G B order.
 func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		fmt.Println("[opc.SendToLPD8806Thread] starting up")
@@ -221,11 +226,11 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 }
 
 // Return a ByteThread which sends the bytes out as OPC messages to the given ipPort.
-// Initiates and maintains a long-lived connection to ipPort.  If the connection is bad at any point
+// Create OPC headers for each byte slice it sends.
+// Initiate and maintains a long-lived connection to ipPort.  If the connection is bad at any point
 // (or was never good to begin with), keep trying to reconnect whenever new bytes come in.
-// Sometimes sleeps during reconnection attempts; this blocks the input channel.
+// Can sleep for WAIT_TO_RETRY during reconnection attempts; this blocks the input channel.
 // Silently drop bytes if it's not possible to send them.
-// Creates OPC headers for each byte slice it sends.
 func MakeSendToOpcThread(ipPort string) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		fmt.Println("[opc.SendToOpcThread] starting up")
@@ -280,6 +285,7 @@ func MakeSendToOpcThread(ipPort string) ByteThread {
 //--------------------------------------------------------------------------------
 // OPC SERVER
 
+// A single OPC message
 type OpcMessage struct {
     Channel byte
     Command byte
@@ -324,9 +330,9 @@ func handleOpcConnection(conn net.Conn, incomingOpcMessageChan chan *OpcMessage)
     }
 }
 
-// You should launch this in its own goroutine.
 // Start a server at ipPort (or, for example, ":7890") and push received *OpcMessage pointers over
 // the incomingOpcMessageChan.
+// You should launch this in its own goroutine.
 func OpcServerThread(ipPort string, incomingOpcMessageChan chan *OpcMessage) {
     fmt.Println("[opc] OPC server thread is listening on", ipPort)
     listen, err := net.Listen("tcp", ":7890")

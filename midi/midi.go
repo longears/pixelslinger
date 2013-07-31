@@ -1,3 +1,33 @@
+/*
+Package midi allows you to listen to incoming MIDI messages.
+
+Warning!  This is not a feature-complete MIDI implementation.  MIDI system messages are ignored with the exception of CLOCK, START, and STOP messages.
+
+Example
+
+If you already have a main event loop, do this:
+
+ // Launch the MIDI reader thread and get the channel it uses to deliver incoming messages
+ midiMessageChan := midi.GetMidiMessageStream("/dev/midi1")
+ 
+ // Create a persistent object which knows the current MIDI state
+ // This includes the current volumes of all notes (will be 0 for non-playing notes)
+ // and the current value of all controllers.
+ midiState := midi.MidiState{}
+
+ // Your main event loop
+ for {
+     // Nonblockingly get all the MIDI messages that have come in since we last checked
+     // and use them to update the MIDI state
+     midiState.UpdateStateFromChannel(midiMessageChan)
+ 
+     // Do things with the MIDI data
+     if midiState.KeyVolumes[60] > 0 {
+         fmt.Println("Key 60 is held down right now")
+     }
+ }
+
+*/
 package midi
 
 import (
@@ -9,9 +39,10 @@ import (
 //================================================================================
 // CONSTANTS
 
-const RETRY_WAIT = 2 // seconds to wait before retrying opening midi device
+const RETRY_WAIT = 2 // seconds to wait before retrying opening midi device file
 
-// kinds
+// kinds of messages
+
 const NOTE_OFF = byte(0x80)
 const NOTE_ON = byte(0x90)
 const AFTERTOUCH = byte(0xa0)
@@ -22,6 +53,7 @@ const PITCH_BEND = byte(0xe0)
 const SYSTEM = byte(0xf0)
 
 // special channel numbers for SYSTEM messages
+
 const CLOCK = byte(8)
 const START = byte(10)
 const STOP = byte(12)
@@ -31,15 +63,16 @@ const STOP = byte(12)
 
 type MidiMessage struct {
 	Kind    byte // one of the constants above
-	Channel byte // either a channel number of one of the special channel constants
-	Key     byte // key, controller, instrument
-	Value   byte // velocity, touch, controller value, channel pressure
+	Channel byte // either a channel number of one of the special channel constants CLOCK, START, STOP
+	Key     byte // key, controller, or instrument
+	Value   byte // velocity, touch, controller value, or channel pressure
 }
 
 func debug(s string) {
 	//fmt.Println("    [midi]", s)
 }
 
+// Convert the MidiMessage to a human-readable string so it can be printed
 func (m *MidiMessage) String() string {
 	kindStr := "other"
 	switch m.Kind {
@@ -136,14 +169,14 @@ func MidiStreamParserThread(inCh chan byte, outCh chan *MidiMessage) {
 // HELPERS
 
 // Start some threads which will read and parse incoming MIDI messages in the background.
-// Return a channel which emits *MidiMessage objects.
+// Return a channel which emits pointers to MidiMessage structs.
 // "path" should be the path to the midi device, e.g. "/dev/midi1".
 // If the path can't be opened, it will keep retrying once a second forever until it succeeds.
 func GetMidiMessageStream(path string) chan *MidiMessage {
 	midiByteChan := make(chan byte, 3000)
 	midiMessageChan := make(chan *MidiMessage, 500)
 
-	go TenaciousFileByteStreamerThread(path, midiByteChan)
+	go tenaciousFileByteStreamerThread(path, midiByteChan)
 	go MidiStreamParserThread(midiByteChan, midiMessageChan)
 
 	return midiMessageChan
@@ -152,7 +185,7 @@ func GetMidiMessageStream(path string) chan *MidiMessage {
 // Stream the bytes from the given path, one byte at a time
 // Assumes the file is a special device file which will never hit EOF.
 // If the file can't be opened, it will keep trying once a second forver until it succeeds.
-func TenaciousFileByteStreamerThread(path string, outCh chan byte) {
+func tenaciousFileByteStreamerThread(path string, outCh chan byte) {
 	for {
 		file, err := os.Open(path)
 		if err != nil {
@@ -189,9 +222,10 @@ type MidiState struct {
 	RecentMidiMessages []*MidiMessage // midi messages from the most recent call to UpdateStateXXX()
 }
 
-// Pull all the available MidiMessages out of the channel.  Requires a channel
+// Pull all the available MidiMessages out of the channel without blocking.  Requires a channel
 // with a buffer length greater than zero.
-func getAvailableMidiMessages(midiMessageChan chan *MidiMessage) []*MidiMessage {
+// This can deadlock if used by more than one goroutine at a time pulling on the same channel.
+func GetAvailableMidiMessages(midiMessageChan chan *MidiMessage) []*MidiMessage {
 	result := make([]*MidiMessage, 0)
 	for {
 		if len(midiMessageChan) == 0 {
@@ -206,12 +240,12 @@ func getAvailableMidiMessages(midiMessageChan chan *MidiMessage) []*MidiMessage 
 // and update the MidiState object.
 // Requires a channel that has a buffer length greater than zero.
 func (midiState *MidiState) UpdateStateFromChannel(midiMessageChan chan *MidiMessage) {
-	midiState.UpdateStateFromSlice(getAvailableMidiMessages(midiMessageChan))
+	midiState.UpdateStateFromSlice(GetAvailableMidiMessages(midiMessageChan))
 }
 
 // Given a slice of MidiMessages, update the MidiState object.
-// Note that MidiState.RecentMidiMessages will become a pointer to the
-// slice provided to this function; it's not a copy of the slice.
+// Note that the MidiState object will keep a pointer to the midiMessages
+// object you provide here (as MidiState.RecentMidiMessages).
 func (midiState *MidiState) UpdateStateFromSlice(midiMessages []*MidiMessage) {
 	midiState.RecentMidiMessages = midiMessages
 	for _, m := range midiState.RecentMidiMessages {
