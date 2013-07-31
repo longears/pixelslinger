@@ -22,12 +22,12 @@ const ONBOARD_LED_MIDI = 1
 const SPI_MAGIC_WORD = "spi"
 const PRINT_MAGIC_WORD = "print"
 const DEVNULL_MAGIC_WORD = "/dev/null"
-const OPC_LOCALHOST_MAGIC_WORD = "localhost"
+const LOCALHOST = "localhost"
 const SPI_FN = "/dev/spidev1.0"
 
 // these are pointers to the actual values from the command line parser
 var LAYOUT_FN = goopt.String([]string{"-l", "--layout"}, "...", "layout file (required)")
-var SOURCE = goopt.String([]string{"-s", "--source"}, "spatial-stripes", "pixel source (either a pattern name or "+OPC_LOCALHOST_MAGIC_WORD+"[:port])")
+var SOURCE = goopt.String([]string{"-s", "--source"}, "spatial-stripes", "pixel source (either a pattern name or "+LOCALHOST+"[:port])")
 var DEST = goopt.String([]string{"-d", "--dest"}, "localhost", "destination (one of "+PRINT_MAGIC_WORD+", "+SPI_MAGIC_WORD+", "+DEVNULL_MAGIC_WORD+", or hostname[:port])")
 var FPS = goopt.Int([]string{"-f", "--fps"}, 40, "max frames per second")
 var SECONDS = goopt.Int([]string{"-n", "--seconds"}, 0, "quit after this many seconds")
@@ -66,16 +66,27 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	nPixels = len(locations) / 3
 
 	// choose source thread method
-	// todo: case localhost:7890
-	//    add port if needed
-	//    sourceThread = opc.MakeOpcServer(*SOURCE)
-	sourceThreadMaker, ok := opc.PATTERN_REGISTRY[*SOURCE]
-	if !ok {
-		fmt.Printf("Error: unknown source or pattern \"%s\"\n", *SOURCE)
-		fmt.Println("--------------------------------------------------------------------------------/")
-		os.Exit(1)
+	if strings.Contains(*SOURCE, LOCALHOST) {
+		// source is localhost, so we will start an OPC server.
+		// add default port if needed
+		if !strings.Contains(*SOURCE, ":") {
+			*SOURCE += ":7890"
+		}
+		sourceThread = opc.MakeOpcServerThread(*SOURCE)
+	} else if (*SOURCE)[0] == ':' {
+		// source is ":4908"
+		*SOURCE = "localhost" + *SOURCE
+		sourceThread = opc.MakeOpcServerThread(*SOURCE)
+	} else {
+		// source is a pattern name
+		sourceThreadMaker, ok := opc.PATTERN_REGISTRY[*SOURCE]
+		if !ok {
+			fmt.Printf("Error: unknown source or pattern \"%s\"\n", *SOURCE)
+			fmt.Println("--------------------------------------------------------------------------------/")
+			os.Exit(1)
+		}
+		sourceThread = sourceThreadMaker(locations)
 	}
-	sourceThread = sourceThreadMaker(locations)
 
 	// choose dest thread method
 	switch *DEST {
