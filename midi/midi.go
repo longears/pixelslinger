@@ -9,7 +9,7 @@ If you already have a main event loop, do this:
 
  // Launch the MIDI reader thread and get the channel it uses to deliver incoming messages
  midiMessageChan := midi.GetMidiMessageStream("/dev/midi1")
- 
+
  // Create a persistent object which knows the current MIDI state
  // This includes the current volumes of all notes (will be 0 for non-playing notes)
  // and the current value of all controllers.
@@ -20,12 +20,18 @@ If you already have a main event loop, do this:
      // Nonblockingly get all the MIDI messages that have come in since we last checked
      // and use them to update the MIDI state
      midiState.UpdateStateFromChannel(midiMessageChan)
- 
+
      // Do things with the MIDI data
      if midiState.KeyVolumes[60] > 0 {
          fmt.Println("Key 60 is held down right now")
      }
  }
+
+For more details on MIDI:
+
+http://www.midi.org/techspecs/midimessages.php
+
+https://en.wikipedia.org/wiki/MIDI_timecode#Quarter-frame_messages
 
 */
 package midi
@@ -64,8 +70,8 @@ const STOP = byte(12)
 type MidiMessage struct {
 	Kind    byte // one of the constants above
 	Channel byte // either a channel number of one of the special channel constants CLOCK, START, STOP
-	Key     byte // key, controller, or instrument
-	Value   byte // velocity, touch, controller value, or channel pressure
+	Key     byte // key, controller, instrument, or pitch bend lsb
+	Value   byte // velocity, touch, controller value, channel pressure, or pitch bend msb
 }
 
 func debug(s string) {
