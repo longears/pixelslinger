@@ -20,7 +20,7 @@ const ONBOARD_LED_HEARTBEAT = 0
 const ONBOARD_LED_MIDI = 1
 
 const SPI_MAGIC_WORD = "spi"
-const SCREEN_MAGIC_WORD = "screen"
+const PRINT_MAGIC_WORD = "print"
 const DEVNULL_MAGIC_WORD = "/dev/null"
 const OPC_LOCALHOST_MAGIC_WORD = "localhost"
 const SPI_FN = "/dev/spidev1.0"
@@ -28,7 +28,7 @@ const SPI_FN = "/dev/spidev1.0"
 // these are pointers to the actual values from the command line parser
 var LAYOUT_FN = goopt.String([]string{"-l", "--layout"}, "...", "layout file (required)")
 var SOURCE = goopt.String([]string{"-s", "--source"}, "spatial-stripes", "pixel source (either a pattern name or "+OPC_LOCALHOST_MAGIC_WORD+"[:port])")
-var DEST = goopt.String([]string{"-d", "--dest"}, "localhost", "destination (one of "+SCREEN_MAGIC_WORD+", "+SPI_MAGIC_WORD+", "+DEVNULL_MAGIC_WORD+", or hostname[:port])")
+var DEST = goopt.String([]string{"-d", "--dest"}, "localhost", "destination (one of "+PRINT_MAGIC_WORD+", "+SPI_MAGIC_WORD+", "+DEVNULL_MAGIC_WORD+", or hostname[:port])")
 var FPS = goopt.Int([]string{"-f", "--fps"}, 40, "max frames per second")
 var SECONDS = goopt.Int([]string{"-n", "--seconds"}, 0, "quit after this many seconds")
 var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one frame", "")
@@ -81,7 +81,7 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 	switch *DEST {
 	case DEVNULL_MAGIC_WORD:
 		destThread = opc.MakeSendToDevNullThread()
-	case SCREEN_MAGIC_WORD:
+	case PRINT_MAGIC_WORD:
 		destThread = opc.MakeSendToScreenThread()
 	case SPI_MAGIC_WORD:
 		destThread = opc.MakeSendToLPD8806Thread(SPI_FN)

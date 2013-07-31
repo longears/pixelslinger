@@ -14,7 +14,7 @@ Pixel sources
 Pixel destinations
 ------------------
 
-* `--dest screen` -- Print the pixel values to the screen for debugging
+* `--dest print` -- Print the pixel values to the screen for debugging
 * `--dest spi` -- Directly control an LED string attached to the SPI bus
 * `--dest hostname:port` -- Send Open Pixel Control messages to the given machine
 * `--dest /dev/null` -- Send pixels nowhere.  Useful for benchmarking pixel sources.
@@ -39,7 +39,7 @@ Usage of ./pixelslinger:
 Options:
   -l ...              --layout=...              layout file (required)
   -s spatial-stripes  --source=spatial-stripes  pixel source (either a pattern name or localhost[:port])
-  -d localhost        --dest=localhost          destination (one of screen, spi, /dev/null, or hostname[:port])
+  -d localhost        --dest=localhost          destination (one of print, spi, /dev/null, or hostname[:port])
   -f 40               --fps=40                  max frames per second
   -n 0                --seconds=0               quit after this many seconds
   -o                  --once                    quit after one frame
