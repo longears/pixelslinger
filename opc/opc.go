@@ -40,9 +40,9 @@ const SPI_CHUNK_SIZE = 2048
 // Gamma for LPD chipset
 const GAMMA = 2.2
 
-const CONNECTION_TRIES = 1   // milliseconds
-const WAIT_TO_RETRY = 1000   // milliseconds
-const WAIT_BETWEEN_RETRIES = 1  // milliseconds
+const CONNECTION_TRIES = 1     // milliseconds
+const WAIT_TO_RETRY = 1000     // milliseconds
+const WAIT_BETWEEN_RETRIES = 1 // milliseconds
 
 //--------------------------------------------------------------------------------
 // OPC LAYOUT FORMAT
@@ -287,72 +287,71 @@ func MakeSendToOpcThread(ipPort string) ByteThread {
 
 // A single OPC message
 type OpcMessage struct {
-    Channel byte
-    Command byte
-    Bytes []byte
+	Channel byte
+	Command byte
+	Bytes   []byte
 }
 
 // Read a series of OPC messages as bytes from the net connection, convert them into OpcMessage
 // objects, and push pointers to those objects over the channel.
 func handleOpcConnection(conn net.Conn, incomingOpcMessageChan chan *OpcMessage) {
-    // OPC protocol:
-    // byte 0: channel number
-    // byte 1: command
-    // byte 2: length (high byte)
-    // byte 3: length (low byte)
-    // bytes 4...: data in R G B order
-    for {
-        // get header
-        headerBuf := make([]byte, 4)
-        n, err := conn.Read(headerBuf)
-        if err != nil {
-            return  // err is EOF hopefully
-        }
-        if n != 4 {
-            panic(fmt.Sprintf("header should be 4 bytes long, got %v", n))
-        }
-        channel := headerBuf[0]
-        command := headerBuf[1]
-        length := int(headerBuf[2]) << 8 + int(headerBuf[3])
+	// OPC protocol:
+	// byte 0: channel number
+	// byte 1: command
+	// byte 2: length (high byte)
+	// byte 3: length (low byte)
+	// bytes 4...: data in R G B order
+	for {
+		// get header
+		headerBuf := make([]byte, 4)
+		n, err := conn.Read(headerBuf)
+		if err != nil {
+			return // err is EOF hopefully
+		}
+		if n != 4 {
+			panic(fmt.Sprintf("header should be 4 bytes long, got %v", n))
+		}
+		channel := headerBuf[0]
+		command := headerBuf[1]
+		length := int(headerBuf[2])<<8 + int(headerBuf[3])
 
-        // get data
-        dataBuf := make([]byte, length)
-        // TODO: test this with length == 0
-        n, err = conn.Read(dataBuf)
-        if err != nil {
-            panic(err)
-        }
-        if n != length {
-            panic(fmt.Sprintf("expected %v bytes of data, got %v", length, n))
-        }
+		// get data
+		dataBuf := make([]byte, length)
+		// TODO: test this with length == 0
+		n, err = conn.Read(dataBuf)
+		if err != nil {
+			panic(err)
+		}
+		if n != length {
+			panic(fmt.Sprintf("expected %v bytes of data, got %v", length, n))
+		}
 
-        incomingOpcMessageChan <- &OpcMessage{channel, command, dataBuf}
-    }
+		incomingOpcMessageChan <- &OpcMessage{channel, command, dataBuf}
+	}
 }
 
 // Start a server at ipPort (or, for example, ":7890") and push received *OpcMessage pointers over
 // the incomingOpcMessageChan.
 // You should launch this in its own goroutine.
 func OpcServerThread(ipPort string, incomingOpcMessageChan chan *OpcMessage) {
-    fmt.Println("[opc] OPC server thread is listening on", ipPort)
-    listen, err := net.Listen("tcp", ":7890")
-    if err != nil {
-        panic(err)
-    }
-    for {
-        conn, err := listen.Accept()
-        if err != nil {
-            panic(err)
-        }
-        go handleOpcConnection(conn, incomingOpcMessageChan)
-    }
+	fmt.Println("[opc] OPC server thread is listening on", ipPort)
+	listen, err := net.Listen("tcp", ":7890")
+	if err != nil {
+		panic(err)
+	}
+	for {
+		conn, err := listen.Accept()
+		if err != nil {
+			panic(err)
+		}
+		go handleOpcConnection(conn, incomingOpcMessageChan)
+	}
 }
 
 // Launch the OPC server in its own goroutine and return the channel over which it
 // will push incoming OPC messages.
 func LaunchOpcServer(ipPort string) chan *OpcMessage {
-    incomingOpcMessageChan := make(chan *OpcMessage, 0)
-    go OpcServerThread(ipPort, incomingOpcMessageChan)
-    return incomingOpcMessageChan
+	incomingOpcMessageChan := make(chan *OpcMessage, 0)
+	go OpcServerThread(ipPort, incomingOpcMessageChan)
+	return incomingOpcMessageChan
 }
-

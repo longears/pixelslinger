@@ -57,14 +57,14 @@ func MakePatternMoire(locations []float64) ByteThread {
 				//z := locations[ii*3+2]
 
 				//period := colorutils.Remap(x, min_coord_x, max_coord_x, MIN_PERIOD, MAX_PERIOD)
-                rPeriod := 1/float64(ii+10)
-                gPeriod := 1/float64((ii+160/3)%160+10)
-                bPeriod := 1/float64((ii+2*160/3)%160+10)
+				rPeriod := 1 / float64(ii+10)
+				gPeriod := 1 / float64((ii+160/3)%160+10)
+				bPeriod := 1 / float64((ii+2*160/3)%160+10)
 
 				// offset, period, minn, maxx
-				r := colorutils.Cos(t * 0.1, 0, rPeriod, 0, 1)
-				g := colorutils.Cos(t * 0.1, 0.11, gPeriod, 0, 1)
-				b := colorutils.Cos(t * 0.1, 0.37, bPeriod, 0, 1)
+				r := colorutils.Cos(t*0.1, 0, rPeriod, 0, 1)
+				g := colorutils.Cos(t*0.1, 0.11, gPeriod, 0, 1)
+				b := colorutils.Cos(t*0.1, 0.37, bPeriod, 0, 1)
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
 				bytes[ii*3+1] = colorutils.FloatToByte(g)
