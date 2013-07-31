@@ -3,6 +3,25 @@ pixelslinger
 
 Controls LED strips and handles Open Pixel Control messages.
 
+This is a single executable, `pixelslinger`, which can receive or generate pixel values and then send them out in a variety of ways.
+
+Pixel sources
+-------------
+
+* `--source localhost:7890` -- Run an OpenPixelControl server and listen for pixels
+* `--source fire` -- Use one of the built-in animations.  See the command-line help for a full list.
+
+Pixel destinations
+------------------
+
+* `--dest screen` -- Print the pixel values to the screen for debugging
+* `--dest spi` -- Directly control an LED string attached to the SPI bus
+* `--dest hostname:port` -- Send Open Pixel Control messages to the given machine
+* `--dest /dev/null` -- Send pixels nowhere.  Useful for benchmarking pixel sources.
+
+Usage
+-----
+
 ```
 Usage of ./pixelslinger:
   Available patterns:
