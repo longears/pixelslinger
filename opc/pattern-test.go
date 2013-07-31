@@ -12,8 +12,8 @@ package opc
 //      Every 8th LED is dark blue
 
 import (
-	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/colorutils"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"math/rand"
 	"time"
 )

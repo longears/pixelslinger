@@ -5,8 +5,8 @@ package opc
 //   This pattern should look saturated, not pastel with cyan-yellow-mageta overtones.
 
 import (
-	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/colorutils"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"time"
 )
 

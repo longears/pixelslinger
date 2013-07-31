@@ -1,7 +1,7 @@
 package opc
 
 import (
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"bufio"
 	"fmt"
 	"math"

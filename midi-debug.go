@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"fmt"
 )
 

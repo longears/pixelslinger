@@ -7,8 +7,8 @@ package opc
 //   For the rest of the pixels it makes a slowly moving red and black sine wave.
 
 import (
-	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/colorutils"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"time"
 )
 

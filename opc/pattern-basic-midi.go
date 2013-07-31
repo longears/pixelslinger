@@ -5,8 +5,8 @@ package opc
 //   LEDs are colored in rainbow order according to the circle of fifths.
 
 import (
-	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/colorutils"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"time"
 )
 

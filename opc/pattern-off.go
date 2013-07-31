@@ -4,7 +4,7 @@ package opc
 //   Set all pixels to black.
 
 import (
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 )
 
 func MakePatternOff(locations []float64) ByteThread {

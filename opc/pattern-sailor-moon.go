@@ -4,8 +4,8 @@ package opc
 //   Waves of magenta and cyan sparkles.
 
 import (
-	"bitbucket.org/davidwallace/go-metal/colorutils"
-	"bitbucket.org/davidwallace/go-metal/midi"
+	"bitbucket.org/davidwallace/pixelslinger/colorutils"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
 	"math"
 	"math/rand"
 	"time"

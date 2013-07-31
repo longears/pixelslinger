@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/davidwallace/go-metal/opc"
+	"bitbucket.org/davidwallace/pixelslinger/opc"
     "fmt"
 )
 

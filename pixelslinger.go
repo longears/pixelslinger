@@ -4,9 +4,9 @@ package main
 // when we're getting pixels via our OPC server source
 
 import (
-	"bitbucket.org/davidwallace/go-metal/beaglebone"
-	"bitbucket.org/davidwallace/go-metal/midi"
-	"bitbucket.org/davidwallace/go-metal/opc"
+	"bitbucket.org/davidwallace/pixelslinger/beaglebone"
+	"bitbucket.org/davidwallace/pixelslinger/midi"
+	"bitbucket.org/davidwallace/pixelslinger/opc"
 	"fmt"
 	"github.com/davecheney/profile"
 	"github.com/droundy/goopt"
