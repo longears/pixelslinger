@@ -103,7 +103,7 @@ func MakePatternFire(locations []float64) ByteThread {
                 // color map
                 r = v * 1.5
                 g = v * 0.65
-                b = v * 0.34
+                b = v * 0.34 * 0.7
 
                 r,g,b = colorutils.RGBContrast(r,g,b, 0.7, 1.2)
 
