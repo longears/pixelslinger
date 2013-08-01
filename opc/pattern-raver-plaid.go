@@ -12,7 +12,7 @@ import (
 
 func MakePatternRaverPlaid(locations []float64) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
-		// pattern parameters
+
 		var (
 			// how many sine wave cycles are squeezed into our n_pixels
 			// 24 happens to create nice diagonal stripes on the wall layout

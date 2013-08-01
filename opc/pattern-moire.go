@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-const MIN_PERIOD = 0.3
-const MAX_PERIOD = 10
-
 func MakePatternMoire(locations []float64) ByteThread {
 
 	n_pixels := len(locations) / 3
@@ -56,6 +53,8 @@ func MakePatternMoire(locations []float64) ByteThread {
 				//y := locations[ii*3+1]
 				//z := locations[ii*3+2]
 
+				//MIN_PERIOD := 0.3
+				//MAX_PERIOD := 10
 				//period := colorutils.Remap(x, min_coord_x, max_coord_x, MIN_PERIOD, MAX_PERIOD)
 				rPeriod := 1 / float64(ii+10)
 				gPeriod := 1 / float64((ii+160/3)%160+10)

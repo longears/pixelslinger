@@ -11,13 +11,16 @@ import (
 	"time"
 )
 
-const TWINKLE_SPEED = 0.27
-const TWINKLE_DENSITY = 0.3
-const WAVE_SPEED = 0.75
-const WAVE_PERIOD = 4
-const WAVE_EXPONENT = 20
-
 func MakePatternSailorMoon(locations []float64) ByteThread {
+
+	var (
+		TWINKLE_SPEED   = 0.27
+		TWINKLE_DENSITY = 0.3
+		WAVE_SPEED      = 0.75
+		WAVE_PERIOD     = 4.0
+		WAVE_EXPONENT   = 20.0
+	)
+
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 		rng := rand.New(rand.NewSource(99))
 

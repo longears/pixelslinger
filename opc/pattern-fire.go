@@ -11,10 +11,14 @@ import (
 	"time"
 )
 
-const SPEED = 0.83      // How quick are the flames?
-const SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
 
 func MakePatternFire(locations []float64) ByteThread {
+
+    var (
+        SPEED      = 0.83 // How quick are the flames?
+        SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
+    )
+
     // get bounding box
     n_pixels := len(locations) / 3
     var max_coord_x, max_coord_y, max_coord_z float64

@@ -10,75 +10,18 @@ import (
 	"time"
 )
 
-const MIDI_VOLUME_GAIN = 1.5    // multiply incoming midi volumes by this much
-const MIDI_BRIGHTNESS_MIN = 0.3 // midi volume 1/127, after MIDI_VOLUME_GAIN, is remapped to this
-const MIDI_BRIGHTNESS_MAX = 1   // midi volume 127, after MIDI_VOLUME_GAIN, is remapped to this
-const SECONDS_TO_FADE = 0.3     // how long it takes to fade to black after key is lifted
-const FADING_GAIN = 0.3         // fading pixels start at their normal value * this amount
-const COLOR_BLEEDING_RAD = 3    // radius of glow effect around pressed keys.  set to 0 for no bleeding
-const COLOR_BLEEDING_GAIN = 0.2 // brightness of glow effect (range 0-1)
-const MIN_VISIBLE_COLOR = 0.04  // min pixel brightness which is actually visible (range 0-1)
-const SUSTAIN = true            // leave lights on while keys are held down
-
-func pitchToRGB(pitch int) (float64, float64, float64) {
-	var r, g, b float64
-	pitchClass := pitch % 12
-	// circle of fifths
-	pitchClass = (pitchClass*5 + 1) % 12
-	switch pitchClass {
-	case 0:
-		r = 1
-		g = 0
-		b = 0
-	case 1:
-		r = 0.9
-		g = 0.4
-		b = 0
-	case 2:
-		r = 0.8
-		g = 0.8
-		b = 0
-	case 3:
-		r = 0.4
-		g = 0.9
-		b = 0
-	case 4:
-		r = 0
-		g = 1
-		b = 0
-	case 5:
-		r = 0
-		g = 0.9
-		b = 0.4
-	case 6:
-		r = 0
-		g = 0.8
-		b = 0.8
-	case 7:
-		r = 0
-		g = 0.4
-		b = 0.9
-	case 8:
-		r = 0
-		g = 0
-		b = 1
-	case 9:
-		r = 0.4
-		g = 0
-		b = 0.9
-	case 10:
-		r = 0.8
-		g = 0
-		b = 0.8
-	case 11:
-		r = 0.9
-		g = 0
-		b = 0.4
-	}
-	return r, g, b
-}
-
 func MakePatternBasicMidi(locations []float64) ByteThread {
+	var (
+		MIDI_VOLUME_GAIN    = 1.5  // multiply incoming midi volumes by this much
+		MIDI_BRIGHTNESS_MIN = 0.3  // midi volume 1/127, after MIDI_VOLUME_GAIN, is remapped to this
+		MIDI_BRIGHTNESS_MAX = 1.0  // midi volume 127, after MIDI_VOLUME_GAIN, is remapped to this
+		SECONDS_TO_FADE     = 0.3  // how long it takes to fade to black after key is lifted
+		COLOR_BLEEDING_RAD  = 3    // radius of glow effect around pressed keys.  set to 0 for no bleeding
+		COLOR_BLEEDING_GAIN = 0.2  // brightness of glow effect (range 0-1)
+		MIN_VISIBLE_COLOR   = 0.04 // min pixel brightness which is actually visible (range 0-1)
+		SUSTAIN             = true // leave lights on while keys are held down
+	)
+
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 
 		// the current volume of each key, from 0 to 1, after applying MIDI_* adjustments
@@ -197,4 +140,63 @@ func MakePatternBasicMidi(locations []float64) ByteThread {
 			bytesOut <- bytes
 		}
 	}
+}
+
+// Convert a midi pitch to a color
+func pitchToRGB(pitch int) (float64, float64, float64) {
+	var r, g, b float64
+	pitchClass := pitch % 12
+	// circle of fifths
+	pitchClass = (pitchClass*5 + 1) % 12
+	switch pitchClass {
+	case 0:
+		r = 1
+		g = 0
+		b = 0
+	case 1:
+		r = 0.9
+		g = 0.4
+		b = 0
+	case 2:
+		r = 0.8
+		g = 0.8
+		b = 0
+	case 3:
+		r = 0.4
+		g = 0.9
+		b = 0
+	case 4:
+		r = 0
+		g = 1
+		b = 0
+	case 5:
+		r = 0
+		g = 0.9
+		b = 0.4
+	case 6:
+		r = 0
+		g = 0.8
+		b = 0.8
+	case 7:
+		r = 0
+		g = 0.4
+		b = 0.9
+	case 8:
+		r = 0
+		g = 0
+		b = 1
+	case 9:
+		r = 0.4
+		g = 0
+		b = 0.9
+	case 10:
+		r = 0.8
+		g = 0
+		b = 0.8
+	case 11:
+		r = 0.9
+		g = 0
+		b = 0.4
+	}
+	return r, g, b
 }
