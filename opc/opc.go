@@ -26,6 +26,7 @@ var PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
 	"raver-plaid":     MakePatternRaverPlaid,
 	"sailor-moon":     MakePatternSailorMoon,
 	"spatial-stripes": MakePatternSpatialStripes,
+	"shield":          MakePatternShield,
 	"test":            MakePatternTest,
 	"test-gamma":      MakePatternTestGamma,
 	"test-rgb":        MakePatternTestRGB,
