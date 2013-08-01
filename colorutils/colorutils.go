@@ -144,7 +144,7 @@ func Contrast(x, center, mult float64) float64 {
 }
 
 // Like Contrast, but on 3 channels at once.
-func RGBContrast(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 float64) {
+func ContrastRgb(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 float64) {
 	r2 = (r-center)*mult + center
 	g2 = (g-center)*mult + center
 	b2 = (b-center)*mult + center
@@ -187,7 +187,7 @@ func Gamma(x, gamma float64) float64 {
 }
 
 // Like Gamma, but on 3 channels at once.
-func RGBGamma(r, g, b, gamma float64) (float64, float64, float64) {
+func GammaRgb(r, g, b, gamma float64) (float64, float64, float64) {
 	if r <= 0 {
 		r = 0
 	} else {

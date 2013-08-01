@@ -105,7 +105,7 @@ func MakePatternFire(locations []float64) ByteThread {
                 g = v * 0.65
                 b = v * 0.34 * 0.7
 
-                r,g,b = colorutils.RGBContrast(r,g,b, 0.7, 1.2)
+                r,g,b = colorutils.ContrastRgb(r,g,b, 0.7, 1.2)
 
                 //r,g,b = colorutils.RGBClipBlackByLuminance(r,g,b, 0.2)
 

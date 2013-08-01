@@ -228,10 +228,10 @@ func BenchmarkContrast(b *testing.B) {
 	_ = gg
 	_ = bb
 }
-func BenchmarkRGBContrast(b *testing.B) {
+func BenchmarkContrastRgb(b *testing.B) {
 	var rr, gg, bb float64
 	for i := 0; i < b.N; i++ {
-		rr, gg, bb = RGBContrast(0.1, 0.2, 0.3, 0.3, 0.3)
+		rr, gg, bb = ContrastRgb(0.1, 0.2, 0.3, 0.3, 0.3)
 	}
 	_ = rr
 	_ = gg

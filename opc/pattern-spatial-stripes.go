@@ -28,7 +28,7 @@ func MakePatternSpatialStripes(locations []float64) ByteThread {
 				r := colorutils.Cos(x, t/4, 1, 0, 0.7) // offset, period, minn, max
 				g := colorutils.Cos(y, t/4, 1, 0, 0.7)
 				b := colorutils.Cos(z, t/4, 1, 0, 0.7)
-				r, g, b = colorutils.RGBContrast(r, g, b, 0.5, 2)
+				r, g, b = colorutils.ContrastRgb(r, g, b, 0.5, 2)
 
 				// make a moving white dot showing the order of the pixels in the layout file
 				spark_ii := colorutils.PosMod2(t*80, float64(n_pixels))
