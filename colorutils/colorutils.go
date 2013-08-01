@@ -10,8 +10,8 @@ faster because they don't check for special cases like infinity and Nan.
 package colorutils
 
 import (
-    "math"
-    "math/rand"
+	"math"
+	"math/rand"
 )
 
 //================================================================================
@@ -25,7 +25,7 @@ var COS_LOOKUP = make([]float64, TABLE_SIZE)
 var RND *rand.Rand
 
 func init() {
-    RND = rand.New(rand.NewSource(99))
+	RND = rand.New(rand.NewSource(99))
 
 	// build cos lookup table
 	for ii := 0; ii < TABLE_SIZE; ii++ {
@@ -68,10 +68,10 @@ func PosMod2(a, b float64) float64 {
 
 // Faster version of math.Abs(a).
 func Abs(a float64) float64 {
-    if a > 0 {
-        return a
-    }
-    return -a
+	if a > 0 {
+		return a
+	}
+	return -a
 }
 
 //================================================================================

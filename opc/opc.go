@@ -372,7 +372,7 @@ func LaunchOpcServer(ipPort string) chan *OpcMessage {
 	return incomingOpcMessageChan
 }
 
-// Return a ByteThread function which will start an OPC server and push out pixels from it in 
+// Return a ByteThread function which will start an OPC server and push out pixels from it in
 // the usual way ByteThreads do.  The channel field is ignored, so if you're piping OPC In to
 // OPC Out be aware that the channel will be set to zero in the process.
 // Only pays attention to OPC messages with command 0 (set pixels).
@@ -384,10 +384,10 @@ func MakeOpcServerThread(ipPort string) ByteThread {
 		for byteSlice := range bytesIn {
 			// wait for incoming opc message
 			opcMessage := <-incomingOpcMessageChan
-            // only accept command 0 (set pixels)
-            if opcMessage.Command != 0 {
-                continue
-            }
+			// only accept command 0 (set pixels)
+			if opcMessage.Command != 0 {
+				continue
+			}
 			// copy opc message bytes into byteSlice and return it
 			// because byteSlice and opcMessage.Bytes might be different lengths,
 			// we reset byteSlice back to length 0 and then append all the bytes
