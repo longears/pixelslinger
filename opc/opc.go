@@ -20,6 +20,7 @@ import (
 
 var PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
 	"basic-midi":      MakePatternBasicMidi,
+	"dither-test":     MakePatternDitherTest,
 	"fire":            MakePatternFire,
 	"moire":           MakePatternMoire,
 	"off":             MakePatternOff,

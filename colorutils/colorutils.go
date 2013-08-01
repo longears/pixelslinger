@@ -9,7 +9,10 @@ faster because they don't check for special cases like infinity and Nan.
 */
 package colorutils
 
-import "math"
+import (
+    "math"
+    "math/rand"
+)
 
 //================================================================================
 // OPTIMIZATIONS
@@ -19,7 +22,11 @@ const TABLE_SIZE = 2048
 
 var COS_LOOKUP = make([]float64, TABLE_SIZE)
 
+var RND *rand.Rand
+
 func init() {
+    RND = rand.New(rand.NewSource(99))
+
 	// build cos lookup table
 	for ii := 0; ii < TABLE_SIZE; ii++ {
 		x := float64(ii) / float64(TABLE_SIZE) * (math.Pi * 2)
@@ -79,6 +86,23 @@ func FloatToByte(x float64) byte {
 		return 0
 	} else {
 		return byte(x * 256)
+	}
+}
+
+// Given a float in the range 0-1, return a byte from 0 to 255.
+// Clamp out-of-range values at 0 or 255.
+// Same as FloatToByte, but does temporal dithering.
+func FloatToByteDithered(x float64) byte {
+	if x >= 1 {
+		return 255
+	} else if x <= 0 {
+		return 0
+	} else {
+        intPart, floatPart := math.Modf(x * 254.999)
+        if RND.Float64() < floatPart {
+            return byte(intPart)+1
+        }
+        return byte(intPart)
 	}
 }
 
@@ -165,7 +189,7 @@ func ModDist(a, b, n float64) float64 {
 	return math.Min(PosMod(a-b, n), PosMod(b-a, n))
 }
 
-// Like ModDist2, but using faster and less accurate Mod2 instead of math.Mod.
+// Like ModDist2, but using faster and less accurate PosMod2 instead of math.Mod.
 func ModDist2(a, b, n float64) float64 {
 	return math.Min(PosMod2(a-b, n), PosMod2(b-a, n))
 }
