@@ -18,14 +18,14 @@ func MakeEffectFader(locations []float64) ByteThread {
 			//t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 
 			// flash white when pad is down
-			pad1 := midiState.KeyVolumes[36]
+			pad1 := midiState.KeyVolumes[midi.LPD8_PAD1]
 			flash *= 0.6
 			if pad1 > 0 {
 				flash = 1
 			}
 
 			// knob fade to black
-			knob1 := float64(midiState.ControllerValues[1]) / 127.0
+			knob1 := float64(midiState.ControllerValues[midi.LPD8_KNOB1]) / 127.0
 
 			// fill in bytes array
 			for ii := 0; ii < n_pixels; ii++ {

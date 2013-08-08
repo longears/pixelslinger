@@ -47,22 +47,50 @@ import (
 
 const RETRY_WAIT = 2 // seconds to wait before retrying opening midi device file
 
+// AKAI LPD8 pad notes
+const (
+	LPD8_PAD1 byte = 36 + iota
+	LPD8_PAD2 byte = 36 + iota
+	LPD8_PAD3 byte = 36 + iota
+	LPD8_PAD4 byte = 36 + iota
+	LPD8_PAD5 byte = 36 + iota
+	LPD8_PAD6 byte = 36 + iota
+	LPD8_PAD7 byte = 36 + iota
+	LPD8_PAD8 byte = 36 + iota
+)
+
+// AKAI LPD8 knob controllers
+const (
+	LPD8_KNOB1 byte = 1 + iota
+	LPD8_KNOB2 byte = 1 + iota
+	LPD8_KNOB3 byte = 1 + iota
+	LPD8_KNOB4 byte = 1 + iota
+	LPD8_KNOB5 byte = 1 + iota
+	LPD8_KNOB6 byte = 1 + iota
+	LPD8_KNOB7 byte = 1 + iota
+	LPD8_KNOB8 byte = 1 + iota
+)
+
 // kinds of messages
 
-const NOTE_OFF = byte(0x80)
-const NOTE_ON = byte(0x90)
-const AFTERTOUCH = byte(0xa0)
-const CONTROLLER = byte(0xb0)
-const PROGRAM_CHANGE = byte(0xc0)
-const CHANNEL_PRESSURE = byte(0xd0)
-const PITCH_BEND = byte(0xe0)
-const SYSTEM = byte(0xf0)
+const (
+	NOTE_OFF         byte = 0x80
+	NOTE_ON          byte = 0x90
+	AFTERTOUCH       byte = 0xa0
+	CONTROLLER       byte = 0xb0
+	PROGRAM_CHANGE   byte = 0xc0
+	CHANNEL_PRESSURE byte = 0xd0
+	PITCH_BEND       byte = 0xe0
+	SYSTEM           byte = 0xf0
+)
 
 // special channel numbers for SYSTEM messages
 
-const CLOCK = byte(8)
-const START = byte(10)
-const STOP = byte(12)
+const (
+	CLOCK byte = 8
+	START byte = 10
+	STOP  byte = 12
+)
 
 //================================================================================
 // MIDIMESSAGE TYPE
@@ -210,9 +238,9 @@ func tenaciousFileByteStreamerThread(path string, outCh chan byte) {
 				fmt.Println(err)
 				break
 			}
-            for ii := 0; ii < count; ii++ {
-                outCh <- buf[ii]
-            }
+			for ii := 0; ii < count; ii++ {
+				outCh <- buf[ii]
+			}
 		}
 	}
 }
