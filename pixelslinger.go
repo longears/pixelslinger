@@ -11,6 +11,7 @@ import (
 	"github.com/longears/pixelslinger/midi"
 	"github.com/longears/pixelslinger/opc"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -24,6 +25,10 @@ const PRINT_MAGIC_WORD = "print"
 const DEVNULL_MAGIC_WORD = "/dev/null"
 const LOCALHOST = "localhost"
 const SPI_FN = "/dev/spidev1.0"
+
+func init() {
+	runtime.GOMAXPROCS(2)
+}
 
 // these are pointers to the actual values from the command line parser
 var LAYOUT_FN = goopt.String([]string{"-l", "--layout"}, "...", "layout file (required)")
@@ -88,8 +93,8 @@ func parseFlags() (nPixels int, sourceThread, effectThread, destThread opc.ByteT
 		sourceThread = sourceThreadMaker(locations)
 	}
 
-    // choose effect thread method
-    effectThread = opc.MakeEffectFader(locations)
+	// choose effect thread method
+	effectThread = opc.MakeEffectFader(locations)
 
 	// choose dest thread method
 	switch *DEST {
@@ -127,7 +132,7 @@ func mainLoop(nPixels int, sourceThread, effectThread, destThread opc.ByteThread
 	sendingSlice := make([]byte, nPixels*3)
 
 	bytesToFillChan := make(chan []byte, 0)
-    toEffectChan := make(chan []byte, 0)
+	toEffectChan := make(chan []byte, 0)
 	bytesFilledChan := make(chan []byte, 0)
 	bytesToSendChan := make(chan []byte, 0)
 	bytesSentChan := make(chan []byte, 0)
@@ -135,9 +140,9 @@ func mainLoop(nPixels int, sourceThread, effectThread, destThread opc.ByteThread
 	// set up midi
 	midiMessageChan := midi.GetMidiMessageStream("/dev/midi1") // this launches the midi thread
 	midiState := midi.MidiState{}
-    // set initial values for controller knobs
-    //  because the midi hardware only sends us values when the knobs move
-    midiState.ControllerValues[1] = 127
+	// set initial values for controller knobs
+	//  because the midi hardware only sends us values when the knobs move
+	midiState.ControllerValues[1] = 127
 
 	// launch the threads
 	go sourceThread(bytesToFillChan, toEffectChan, &midiState)
