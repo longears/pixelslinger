@@ -71,8 +71,7 @@ const (
 	LPD8_KNOB8 byte = 1 + iota
 )
 
-// kinds of messages
-
+// kinds of MIDI messages
 const (
 	NOTE_OFF         byte = 0x80
 	NOTE_ON          byte = 0x90
@@ -85,7 +84,6 @@ const (
 )
 
 // special channel numbers for SYSTEM messages
-
 const (
 	CLOCK byte = 8
 	START byte = 10
