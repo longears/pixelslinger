@@ -37,7 +37,7 @@ var ONCE = goopt.Flag([]string{"-o", "--once"}, []string{}, "quit after one fram
 // Add default ports if needed.
 // Read the layout file.
 // Return the number of pixels in the layout, the source and dest thread methods.
-func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
+func parseFlags() (nPixels int, sourceThread, effectThread, destThread opc.ByteThread) {
 
 	// get sorted pattern names
 	patternNames := make([]string, len(opc.PATTERN_REGISTRY))
@@ -88,6 +88,9 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 		sourceThread = sourceThreadMaker(locations)
 	}
 
+    // choose effect thread method
+    effectThread = opc.MakeEffectFader(locations)
+
 	// choose dest thread method
 	switch *DEST {
 	case DEVNULL_MAGIC_WORD:
@@ -111,7 +114,7 @@ func parseFlags() (nPixels int, sourceThread, destThread opc.ByteThread) {
 // Run until timeToRun seconds have passed and return.  If timeToRun is 0, run forever.
 // Turn on the CPU profiler if timeToRun seconds > 0.
 // Limit the framerate to a max of fps unless fps is 0.
-func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64, timeToRun float64) {
+func mainLoop(nPixels int, sourceThread, effectThread, destThread opc.ByteThread, fps float64, timeToRun float64) {
 	if timeToRun > 0 {
 		fmt.Printf("[mainLoop] Running for %f seconds with profiling turned on, pixels and network\n", timeToRun)
 		defer profile.Start(profile.CPUProfile).Stop()
@@ -124,6 +127,7 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	sendingSlice := make([]byte, nPixels*3)
 
 	bytesToFillChan := make(chan []byte, 0)
+    toEffectChan := make(chan []byte, 0)
 	bytesFilledChan := make(chan []byte, 0)
 	bytesToSendChan := make(chan []byte, 0)
 	bytesSentChan := make(chan []byte, 0)
@@ -131,9 +135,13 @@ func mainLoop(nPixels int, sourceThread, destThread opc.ByteThread, fps float64,
 	// set up midi
 	midiMessageChan := midi.GetMidiMessageStream("/dev/midi1") // this launches the midi thread
 	midiState := midi.MidiState{}
+    // set initial values for controller knobs
+    //  because the midi hardware only sends us values when the knobs move
+    midiState.ControllerValues[1] = 127
 
 	// launch the threads
-	go sourceThread(bytesToFillChan, bytesFilledChan, &midiState)
+	go sourceThread(bytesToFillChan, toEffectChan, &midiState)
+	go effectThread(toEffectChan, bytesFilledChan, &midiState)
 	go destThread(bytesToSendChan, bytesSentChan, &midiState)
 
 	// main loop
@@ -219,6 +227,6 @@ func main() {
 	fmt.Println("--------------------------------------------------------------------------------\\")
 	defer fmt.Println("--------------------------------------------------------------------------------/")
 
-	nPixels, sourceThread, destThread := parseFlags()
-	mainLoop(nPixels, sourceThread, destThread, float64(*FPS), float64(*SECONDS))
+	nPixels, sourceThread, effectThread, destThread := parseFlags()
+	mainLoop(nPixels, sourceThread, effectThread, destThread, float64(*FPS), float64(*SECONDS))
 }
