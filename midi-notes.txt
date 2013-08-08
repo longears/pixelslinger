@@ -1,0 +1,71 @@
+AKAI LPD8 controller
+default settings
+
+================================================================================
+PROGRAM 1
+
+everything is on channel 0
+
+pads in "pad" mode
+    releasing a pad sends a note-off message with value 127
+
+            note
+    pad1    36
+    pad2    37
+    pad3    38
+    pad4    39
+    pad5    40
+    pad6    41
+    pad7    42
+    pad8    43
+
+pads in "cc" mode
+
+            note / controller number
+    pad1    1 (same as knobs)
+    pad2    2
+    ...
+
+pads in "prog chng" mode
+
+    pad1    0xc0 ch=0 key=0 val=0
+    pad2    0xc0 ch=0 key=1 val=0
+    ...
+    pad8    0xc0 ch=0 key=7 val=0
+
+knobs
+
+            note / controller number
+    knob1   1
+    knob2   2
+    ...
+
+================================================================================
+PROGRAM 2
+
+everything is on channel 1
+knobs are the same
+pads are variously different notes in "pad" mode:
+
+pads 5-6: 37 38 46 44
+pads 1-4: 35 36 42 39
+
+pads are the same in "cc" and "prog chng" mode
+
+================================================================================
+PROGRAM 3
+
+everything is on channel 2
+
+pads 5-6: 67 69 71 72
+pads 1-4: 60 62 64 65
+
+================================================================================
+PROGRAM 4
+
+everything is on channel 3
+
+pads 5-6: 43 45 47 48
+pads 1-4: 36 38 40 41
+
+
