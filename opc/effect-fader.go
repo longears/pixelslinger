@@ -1,8 +1,8 @@
 package opc
 
-// Fire
-//   Make a burning fire pattern.
-//   This pattern is scaled to fit the layout from top to bottom (z).
+// Fader effect
+//   Listen to a midi knob and fade the entire pattern to black.
+//   Fade the even pixels to black first, then the odd pixels.
 
 import (
 	"github.com/longears/pixelslinger/colorutils"

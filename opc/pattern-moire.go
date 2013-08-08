@@ -1,6 +1,7 @@
 package opc
 
 // Moire
+//   A super ugly pattern
 
 import (
 	"github.com/longears/pixelslinger/colorutils"
