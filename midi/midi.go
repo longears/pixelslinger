@@ -202,7 +202,7 @@ func tenaciousFileByteStreamerThread(path string, outCh chan byte) {
 		defer file.Close()
 		fmt.Println("[midi] successfully opened midi device", path)
 
-		buf := make([]byte, 1)
+		buf := make([]byte, 1024)
 		for {
 			count, err := file.Read(buf)
 			if err != nil {
@@ -210,10 +210,9 @@ func tenaciousFileByteStreamerThread(path string, outCh chan byte) {
 				fmt.Println(err)
 				break
 			}
-			if count != 1 {
-				panic(fmt.Sprintf("[midi] ERROR: when reading, read %s bytes instead of 1", count))
-			}
-			outCh <- buf[0]
+            for ii := 0; ii < count; ii++ {
+                outCh <- buf[ii]
+            }
 		}
 	}
 }
