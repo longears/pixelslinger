@@ -7,6 +7,7 @@ import (
 // pads
 const (
 	FLASH_PAD = midi.LPD8_PAD1
+	TWINKLE_PAD = midi.LPD8_PAD2
 )
 
 // knobs
