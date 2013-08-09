@@ -24,7 +24,7 @@ func MakeEffectFader(locations []float64) ByteThread {
         FLASH_DURATION_EXP = 5.0         // exponent for random duration
 
         MAX_TWINKLE_DENSITY = 0.3
-        TWINKLE_FADE_SPEED = 0.1         // smaller numbers -> longer time for twinkles to fade
+        TWINKLE_DURATION = 8.0 / 40.0
 
 		EYELID_BLEND       = 0.25        // size of eyelid gradient relative to entire bounding box
 	)
@@ -55,7 +55,7 @@ func MakeEffectFader(locations []float64) ByteThread {
 		}
 
 		lastFlashTime := 0.0
-        twinkleRamp := 0.0
+        lastTwinkleTime := 0.0
         lastTwinklePad := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
@@ -71,10 +71,7 @@ func MakeEffectFader(locations []float64) ByteThread {
 			twinklePad := float64(midiState.KeyVolumes[config.TWINKLE_PAD]) / 127.0
             if twinklePad > 0 {
                 lastTwinklePad = twinklePad
-                //twinkleRamp = colorutils.Clamp(twinkleRamp + TWINKLE_FADE_SPEED, 0, 1)
-                twinkleRamp = 1.0
-            } else {
-                twinkleRamp = colorutils.Clamp(twinkleRamp - TWINKLE_FADE_SPEED, 0, 1)
+                lastTwinkleTime = t
             }
 
 			// gain knob
@@ -131,10 +128,11 @@ func MakeEffectFader(locations []float64) ByteThread {
 				b = b*(1-flashAmt) + flashAmt * FLASH_B
 
                 // twinkle strobe
-                if twinkleRamp > 0 {
+                twinkleAmt := colorutils.Clamp(colorutils.Remap(t-lastTwinkleTime, 0, TWINKLE_DURATION, 1, 0), 0, 1)
+                if twinkleAmt > 0 {
                     thisTwinkle := rand.Float64()
                     if thisTwinkle < lastTwinklePad * MAX_TWINKLE_DENSITY {
-                        thisTwinkle = twinkleRamp
+                        thisTwinkle = twinkleAmt
                     } else {
                         thisTwinkle = 0
                     }
