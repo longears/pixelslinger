@@ -8,6 +8,7 @@ import (
 	"github.com/davecheney/profile"
 	"github.com/droundy/goopt"
 	"github.com/longears/pixelslinger/beaglebone"
+	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
 	"github.com/longears/pixelslinger/opc"
 	"os"
@@ -141,10 +142,10 @@ func mainLoop(nPixels int, sourceThread, effectThread, destThread opc.ByteThread
 	midiMessageChan := midi.GetMidiMessageStream("/dev/midi1") // this launches the midi thread
 	midiState := midi.MidiState{}
 	// set initial values for controller knobs
-	//  because the midi hardware only sends us values when the knobs move
-	midiState.ControllerValues[1] = 127
-	midiState.ControllerValues[2] = 127
-	midiState.ControllerValues[3] = 63
+	//  (because the midi hardware only sends us values when the knobs move)
+    for knob,defaultVal := range config.DEFAULT_KNOB_VALUES {
+        midiState.ControllerValues[knob] = defaultVal
+    }
 
 
 	// launch the threads
