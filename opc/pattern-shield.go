@@ -16,8 +16,9 @@ func MakePatternShield(locations []float64) ByteThread {
         t := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
-			this_t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 
+            // time and speed knob bookkeeping
+			this_t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 			speedKnob := float64(midiState.ControllerValues[config.SPEED_KNOB]) / 127.0
             if speedKnob < 0.5 {
                 speedKnob = colorutils.RemapAndClamp(speedKnob, 0, 0.4, 0, 1)

@@ -117,7 +117,7 @@ func RemapAndClamp(x, oldmin, oldmax, newmin, newmax float64) float64 {
 	} else {
 		zero_to_one = (x - oldmin) / (oldmax - oldmin)
 	}
-    zero_to_one = Clamp(zero_to_one, 0, 1)
+	zero_to_one = Clamp(zero_to_one, 0, 1)
 	return zero_to_one*(newmax-newmin) + newmin
 }
 
