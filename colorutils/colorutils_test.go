@@ -145,6 +145,45 @@ func BenchmarkRemap(b *testing.B) {
 }
 
 //================================================================================
+func remapAndClampTestHelper(t *testing.T, x, oldmin, oldmax, newmin, newmax, result float64) {
+	if tmp := RemapAndClamp(x, oldmin, oldmax, newmin, newmax); tmp != result {
+		t.Errorf("RemapAndClamp(%f,%f,%f,%f,%f) = %f, want %f", x, oldmin, oldmax, newmin, newmax, tmp, result)
+	}
+}
+func TestRemapAndClamp(t *testing.T) {
+	// x, oldmin, oldmax, newmin, newmax, result
+	remapAndClampTestHelper(t, -1.0, 0.0, 1.0, 0.0, 1.0, 0.0)
+	remapAndClampTestHelper(t, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0)
+	remapAndClampTestHelper(t, 0.8, 0.0, 1.0, 0.0, 1.0, 0.8)
+	remapAndClampTestHelper(t, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0)
+	remapAndClampTestHelper(t, 2.0, 0.0, 1.0, 0.0, 1.0, 1.0)
+
+	remapAndClampTestHelper(t, -1.0, 0.0, 1.0, 10.0, 20.0, 10.0)
+	remapAndClampTestHelper(t, 0.0, 0.0, 1.0, 10.0, 20.0, 10.0)
+	remapAndClampTestHelper(t, 0.8, 0.0, 1.0, 10.0, 20.0, 18.0)
+	remapAndClampTestHelper(t, 1.0, 0.0, 1.0, 10.0, 20.0, 20.0)
+	remapAndClampTestHelper(t, 2.0, 0.0, 1.0, 10.0, 20.0, 20.0)
+
+	remapAndClampTestHelper(t, 0.0, 10.0, 20.0, 0.0, 1.0, 0.0)
+	remapAndClampTestHelper(t, 10.0, 10.0, 20.0, 0.0, 1.0, 0.0)
+	remapAndClampTestHelper(t, 18.0, 10.0, 20.0, 0.0, 1.0, 0.8)
+	remapAndClampTestHelper(t, 20.0, 10.0, 20.0, 0.0, 1.0, 1.0)
+	remapAndClampTestHelper(t, 30.0, 10.0, 20.0, 0.0, 1.0, 1.0)
+
+	// degenerate input range
+	remapAndClampTestHelper(t, 11.0, 11.0, 11.0, 10.0, 20.0, 15.0)
+	remapAndClampTestHelper(t, 19.0, 11.0, 11.0, 10.0, 20.0, 15.0)
+
+	// degenerate output range
+	remapAndClampTestHelper(t, 20.0, 10.0, 20.0, 1.0, 1.0, 1.0)
+}
+func BenchmarkRemapAndClamp(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		RemapAndClamp(0.8, 0.0, 1.0, 0.0, 1.0)
+	}
+}
+
+//================================================================================
 func clampTestHelper(t *testing.T, x, minn, maxx, result float64) {
 	if tmp := Clamp(x, minn, maxx); tmp != result {
 		t.Errorf("Clamp(%f,%f,%f) = %f, want %f", x, minn, maxx, tmp, result)
