@@ -8,8 +8,8 @@ import (
 	"github.com/longears/pixelslinger/colorutils"
 	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
-    "math"
-    "math/rand"
+	"math"
+	"math/rand"
 	"time"
 )
 
@@ -18,34 +18,34 @@ func MakeEffectFader(locations []float64) ByteThread {
 	const (
 		FLASH_DURATION_MIN = 2.0 / 40.0  // in seconds
 		FLASH_DURATION_MAX = 10.0 / 40.0 // in seconds
-        FLASH_R = 0.6
-        FLASH_G = 0.84
-        FLASH_B = 1.00
-        FLASH_DURATION_EXP = 5.0         // exponent for random duration
+		FLASH_R            = 0.6
+		FLASH_G            = 0.84
+		FLASH_B            = 1.00
+		FLASH_DURATION_EXP = 5.0 // exponent for random duration
 
-        MAX_TWINKLE_DENSITY = 0.3
-        TWINKLE_DURATION = 8.0 / 40.0
+		MAX_TWINKLE_DENSITY = 0.3
+		TWINKLE_DURATION    = 8.0 / 40.0
 
-		EYELID_BLEND       = 0.25        // size of eyelid gradient relative to entire bounding box
+		EYELID_BLEND = 0.25 // size of eyelid gradient relative to entire bounding box
 	)
 
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 
-        // get bounding box
-        n_pixels := len(locations) / 3
-        var max_coord_x, max_coord_y, max_coord_z float64
-        var min_coord_x, min_coord_y, min_coord_z float64
-        for ii := 0; ii < n_pixels; ii++ {
-            x := locations[ii*3+0]
-            y := locations[ii*3+1]
-            z := locations[ii*3+2]
+		// get bounding box
+		n_pixels := len(locations) / 3
+		var max_coord_x, max_coord_y, max_coord_z float64
+		var min_coord_x, min_coord_y, min_coord_z float64
+		for ii := 0; ii < n_pixels; ii++ {
+			x := locations[ii*3+0]
+			y := locations[ii*3+1]
+			z := locations[ii*3+2]
             if ii == 0 || x > max_coord_x { max_coord_x = x }
             if ii == 0 || y > max_coord_y { max_coord_y = y }
             if ii == 0 || z > max_coord_z { max_coord_z = z }
             if ii == 0 || x < min_coord_x { min_coord_x = x }
             if ii == 0 || y < min_coord_y { min_coord_y = y }
             if ii == 0 || z < min_coord_z { min_coord_z = z }
-        }
+		}
 
 		// make persistant random values
 		rng := rand.New(rand.NewSource(99))
@@ -55,8 +55,8 @@ func MakeEffectFader(locations []float64) ByteThread {
 		}
 
 		lastFlashTime := 0.0
-        lastTwinkleTime := 0.0
-        lastTwinklePad := 0.0
+		lastTwinkleTime := 0.0
+		lastTwinklePad := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
@@ -67,12 +67,12 @@ func MakeEffectFader(locations []float64) ByteThread {
 				lastFlashTime = t
 			}
 
-            // twinkle strobe pad
+			// twinkle strobe pad
 			twinklePad := float64(midiState.KeyVolumes[config.TWINKLE_PAD]) / 127.0
-            if twinklePad > 0 {
-                lastTwinklePad = twinklePad
-                lastTwinkleTime = t
-            }
+			if twinklePad > 0 {
+				lastTwinklePad = twinklePad
+				lastTwinkleTime = t
+			}
 
 			// gain knob
 			gainKnob := float64(midiState.ControllerValues[config.GAIN_KNOB]) / 127.0
@@ -115,31 +115,31 @@ func MakeEffectFader(locations []float64) ByteThread {
 
 				// eyelid
 				eyelid := colorutils.Clamp(colorutils.Remap(zp,
-					eyelidKnob - (1-zp)*EYELID_BLEND/2,
-					eyelidKnob + zp*EYELID_BLEND/2, 1, 0), 0, 1)
+					eyelidKnob-(1-zp)*EYELID_BLEND/2,
+					eyelidKnob+zp*EYELID_BLEND/2, 1, 0), 0, 1)
 				r *= eyelid
 				g *= eyelid
 				b *= eyelid
 
 				// lightning flash
-                flashAmt := colorutils.Clamp(colorutils.Remap(t-lastFlashTime, 0, FLASH_DURATION_MIN + randomValues[ii]*(FLASH_DURATION_MAX-FLASH_DURATION_MIN), 1, 0), 0, 1)
-				r = r*(1-flashAmt) + flashAmt * FLASH_R
-				g = g*(1-flashAmt) + flashAmt * FLASH_G
-				b = b*(1-flashAmt) + flashAmt * FLASH_B
+				flashAmt := colorutils.Clamp(colorutils.Remap(t-lastFlashTime, 0, FLASH_DURATION_MIN+randomValues[ii]*(FLASH_DURATION_MAX-FLASH_DURATION_MIN), 1, 0), 0, 1)
+				r = r*(1-flashAmt) + flashAmt*FLASH_R
+				g = g*(1-flashAmt) + flashAmt*FLASH_G
+				b = b*(1-flashAmt) + flashAmt*FLASH_B
 
-                // twinkle strobe
-                twinkleAmt := colorutils.Clamp(colorutils.Remap(t-lastTwinkleTime, 0, TWINKLE_DURATION, 1, 0), 0, 1)
-                if twinkleAmt > 0 {
-                    thisTwinkle := rand.Float64()
-                    if thisTwinkle < lastTwinklePad * MAX_TWINKLE_DENSITY {
-                        thisTwinkle = twinkleAmt
-                    } else {
-                        thisTwinkle = 0
-                    }
-                    r += thisTwinkle
-                    g += thisTwinkle
-                    b += thisTwinkle
-                }
+				// twinkle strobe
+				twinkleAmt := colorutils.Clamp(colorutils.Remap(t-lastTwinkleTime, 0, TWINKLE_DURATION, 1, 0), 0, 1)
+				if twinkleAmt > 0 {
+					thisTwinkle := rand.Float64()
+					if thisTwinkle < lastTwinklePad*MAX_TWINKLE_DENSITY {
+						thisTwinkle = twinkleAmt
+					} else {
+						thisTwinkle = 0
+					}
+					r += thisTwinkle
+					g += thisTwinkle
+					b += thisTwinkle
+				}
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
 				bytes[ii*3+1] = colorutils.FloatToByte(g)
