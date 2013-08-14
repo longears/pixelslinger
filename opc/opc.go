@@ -18,19 +18,25 @@ import (
 //--------------------------------------------------------------------------------
 // PATTERN REGISTRY
 
-var PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
-	"basic-midi":      MakePatternBasicMidi,
-	"fire":            MakePatternFire,
-	"moire":           MakePatternMoire,
-	"off":             MakePatternOff,
-	"raver-plaid":     MakePatternRaverPlaid,
-	"sailor-moon":     MakePatternSailorMoon,
-	"shield":          MakePatternShield,
-	"spatial-stripes": MakePatternSpatialStripes,
-	"test":            MakePatternTest,
-	"test-gamma":      MakePatternTestGamma,
-	"test-rgb":        MakePatternTestRGB,
-	"white":           MakePatternWhite,
+var PATTERN_REGISTRY map[string](func(locations []float64) ByteThread)
+func init() {
+    // This has to happen in init() to avoid an initialization loop (circular dependency)
+    // because the midi-switcher pattern reads from this map.
+    PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
+        "basic-midi":      MakePatternBasicMidi,
+        "fire":            MakePatternFire,
+        "moire":           MakePatternMoire,
+        "off":             MakePatternOff,
+        "raver-plaid":     MakePatternRaverPlaid,
+        "sailor-moon":     MakePatternSailorMoon,
+        "shield":          MakePatternShield,
+        "spatial-stripes": MakePatternSpatialStripes,
+        "test":            MakePatternTest,
+        "test-gamma":      MakePatternTestGamma,
+        "test-rgb":        MakePatternTestRGB,
+        "white":           MakePatternWhite,
+        "midi-switcher":   MakePatternMidiSwitcher,
+    }
 }
 
 //--------------------------------------------------------------------------------

@@ -15,6 +15,7 @@ const (
 	GAIN_KNOB   = midi.LPD8_KNOB1
 	EYELID_KNOB = midi.LPD8_KNOB2
 	SPEED_KNOB  = midi.LPD8_KNOB3
+	SWITCH_KNOB  = midi.LPD8_KNOB4
 )
 
 // knob starting values before they have been moved
