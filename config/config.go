@@ -4,13 +4,13 @@ import (
 	"github.com/longears/pixelslinger/midi"
 )
 
-// pads
+// midi pads
 const (
 	FLASH_PAD = midi.LPD8_PAD1
 	TWINKLE_PAD = midi.LPD8_PAD2
 )
 
-// knobs
+// midi knobs
 const (
 	GAIN_KNOB   = midi.LPD8_KNOB1
 	EYELID_KNOB = midi.LPD8_KNOB2

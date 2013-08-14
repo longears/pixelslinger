@@ -212,9 +212,17 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 				g = 128 | (g >> 1)
 				b = 128 | (b >> 1)
 				// swap to [g r b] order
-				spiBytes = append(spiBytes, g)
-				spiBytes = append(spiBytes, r)
-				spiBytes = append(spiBytes, b)
+				if ii < 160 {
+					// copper-colored strip
+					spiBytes = append(spiBytes, g)
+					spiBytes = append(spiBytes, r)
+					spiBytes = append(spiBytes, b)
+				} else {
+					// white strips
+					spiBytes = append(spiBytes, b)
+					spiBytes = append(spiBytes, r)
+					spiBytes = append(spiBytes, g)
+				}
 			}
 
 			// send some extra black pixels to make the last LEDs latch
