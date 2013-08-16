@@ -37,6 +37,27 @@ Install & compile
  ./pixelslinger             // and then run after compiling
  ```
 
+To use with the OpenPixelControl simulator
+------------------------------------------
+
+The [main OpenPixelControl repo](https://github.com/zestyping/openpixelcontrol/) comes with an OpenGL simulator which shows your animation in 3d.
+
+The point of OpenPixelControl is to allow pixel generation and pixel display to be separated into different programs, possibly running on different machines connected over the network.
+
+Pixelslinger can act as both a pixel source and a pixel display.  In this case we want it to be a source and the OpenGL simulator will be the display.
+
+1. Download and compile https://github.com/zestyping/openpixelcontrol/
+
+1. Run the simulator which will listen on port 7890 by default
+
+ `openpixelcontrol$ bin/gl_server layouts/freespace.json`
+
+1. In another shell, run pixelslinger to send pixels to the simulator
+
+ ```
+ pixelslinger$ ./pixelslinger --layout layouts/freespace.json --source fire --dest localhost:7890
+ ```
+
 Pixel sources
 -------------
 
