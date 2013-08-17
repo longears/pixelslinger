@@ -24,7 +24,9 @@ func init() {
     // because the midi-switcher pattern reads from this map.
     PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
         "basic-midi":      MakePatternBasicMidi,
+        "eye":             MakePatternEye,
         "fire":            MakePatternFire,
+        "midi-switcher":   MakePatternMidiSwitcher,
         "moire":           MakePatternMoire,
         "off":             MakePatternOff,
         "raver-plaid":     MakePatternRaverPlaid,
@@ -35,7 +37,6 @@ func init() {
         "test-gamma":      MakePatternTestGamma,
         "test-rgb":        MakePatternTestRGB,
         "white":           MakePatternWhite,
-        "midi-switcher":   MakePatternMidiSwitcher,
     }
 }
 
@@ -270,6 +271,16 @@ func MakeSendToOpcThread(ipPort string) ByteThread {
 		var conn net.Conn
 		var err error
 
+		gamma_lookup := make([]byte, 256)
+		for ii := 0; ii < 256; ii++ {
+			floatVal := math.Pow(float64(ii)/255, GAMMA)
+			if floatVal >= 1 {
+				gamma_lookup[ii] = 255
+			} else {
+				gamma_lookup[ii] = byte(floatVal * 256)
+			}
+		}
+
 		for bytes := range bytesIn {
 			// if the connection has gone bad, make a new one
 			if conn == nil {
@@ -284,6 +295,13 @@ func MakeSendToOpcThread(ipPort string) ByteThread {
 			}
 
 			// ok, at this point the connection is good
+
+            // gamma correct
+            // HACK: change this later when we decide if OPC should have
+            // pixels in perceptual or linear space
+			for ii := range(bytes) {
+				bytes[ii] = gamma_lookup[bytes[ii+0]]
+            }
 
 			// make and send OPC header
 			channel := byte(0)
