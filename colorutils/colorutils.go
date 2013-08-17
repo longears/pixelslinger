@@ -107,6 +107,23 @@ func Remap(x, oldmin, oldmax, newmin, newmax float64) float64 {
 }
 
 // Remap the float x from the range oldmin-oldmax to the range newmin-newmax.
+// Clamp values that exceed min or max.
+// Ease the transition using a cosine curve, so that if x goes linearly from
+// oldmin to oldmax, the output will smoothly accelerate away from newmin and
+// then slow down as it approaches newmax.
+func EaseRemapAndClamp(x, oldmin, oldmax, newmin, newmax float64) float64 {
+	var zero_to_one float64
+	if oldmax == oldmin {
+		zero_to_one = 0.5
+	} else {
+		zero_to_one = (x - oldmin) / (oldmax - oldmin)
+	}
+	zero_to_one = Clamp(zero_to_one, 0, 1)
+	zero_to_one = 1 - (math.Cos(zero_to_one*math.Pi)/2 + 0.5)
+	return zero_to_one*(newmax-newmin) + newmin
+}
+
+// Remap the float x from the range oldmin-oldmax to the range newmin-newmax.
 // DOES clamp values that exceed min or max.
 // For example, to make a sine wave that goes between 0 and 256:
 //     remap(math.sin(time.time()), -1, 1, 0, 256)
