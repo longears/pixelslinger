@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func MakePatternChevron(locations []float64) ByteThread {
+func MakePatternDiamond(locations []float64) ByteThread {
 
 	// get bounding box
 	n_pixels := len(locations) / 3
