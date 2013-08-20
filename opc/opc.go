@@ -24,6 +24,7 @@ func init() {
     // because the midi-switcher pattern reads from this map.
     PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
         "basic-midi":      MakePatternBasicMidi,
+        "chevron":         MakePatternChevron,
         "eye":             MakePatternEye,
         "fire":            MakePatternFire,
         "midi-switcher":   MakePatternMidiSwitcher,

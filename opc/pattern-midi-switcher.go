@@ -16,6 +16,7 @@ func MakePatternMidiSwitcher(locations []float64) ByteThread {
 
         // The patterns that our MIDI knob will switch between
         PATTERN_LIST := []string{
+            "chevron",
             "fire",
             "raver-plaid",
             "shield",
