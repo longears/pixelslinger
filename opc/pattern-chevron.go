@@ -7,6 +7,7 @@ package opc
 
 import (
 	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
 	"math"
 	"time"
@@ -15,25 +16,25 @@ import (
 func MakePatternChevron(locations []float64) ByteThread {
 
 	var (
-
-        MORPH = 0.0 // 0 to 1.  0 is large blend, 1 is tiny blend
+		MORPH = 0.0  // 0 to 1.  0 is large blend, 1 is tiny blend
+		SPEED = 0.83 // Overall speed. This is applied in addition to the speed knob.
 
 		SIDE_SCALE = 1.0 // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
 
-        DISPERSAL = 0.2
+		DISPERSAL = 0.2 // how much of a chromatic aberration effect
 
 		WHITE_WAVE_PERIOD = 0.4
-		WHITE_WAVE_SPEED  = 0.58
+		WHITE_WAVE_SPEED  = 0.58 // positive is down
 		WHITE_WAVE_THRESH = 0.9
 
 		RED_WAVE_PERIOD = 0.4
 		RED_WAVE_SPEED  = 0.2 // positive is down
 		RED_WAVE_THRESH = 0.9
 
-		BLEND_PERIOD = 0.3
-		BLEND_SPEED  = -0.33 // positive is down
-		BLEND_THRESH = 0.5 * (1-MORPH) + 0.99 * MORPH  // 1 is red, 0 is white
-        BLEND_THRESH_AMT = 2.0 * (1-MORPH) + 20.0 * MORPH // contrast amount
+		BLEND_PERIOD     = 0.3
+		BLEND_SPEED      = -0.33                      // positive is down
+		BLEND_THRESH     = 0.5*(1-MORPH) + 0.99*MORPH // 1 is red, 0 is white
+		BLEND_THRESH_AMT = 2.0*(1-MORPH) + 20.0*MORPH // contrast amount
 	)
 
 	// get bounding box
@@ -44,30 +45,33 @@ func MakePatternChevron(locations []float64) ByteThread {
 		x := locations[ii*3+0]
 		y := locations[ii*3+1]
 		z := locations[ii*3+2]
-		if ii == 0 || x > max_coord_x {
-			max_coord_x = x
-		}
-		if ii == 0 || y > max_coord_y {
-			max_coord_y = y
-		}
-		if ii == 0 || z > max_coord_z {
-			max_coord_z = z
-		}
-		if ii == 0 || x < min_coord_x {
-			min_coord_x = x
-		}
-		if ii == 0 || y < min_coord_y {
-			min_coord_y = y
-		}
-		if ii == 0 || z < min_coord_z {
-			min_coord_z = z
-		}
+		if ii == 0 || x > max_coord_x { max_coord_x = x }
+		if ii == 0 || y > max_coord_y { max_coord_y = y }
+		if ii == 0 || z > max_coord_z { max_coord_z = z }
+		if ii == 0 || x < min_coord_x { min_coord_x = x }
+		if ii == 0 || y < min_coord_y { min_coord_y = y }
+		if ii == 0 || z < min_coord_z { min_coord_z = z }
 	}
 
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
+		last_t := 0.0
+		t := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
-			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
+
+			// time and speed knob bookkeeping
+			this_t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
+			speedKnob := float64(midiState.ControllerValues[config.SPEED_KNOB]) / 127.0
+			if speedKnob < 0.5 {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0, 0.4, 0, 1)
+			} else {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0.6, 1, 1, 4)
+			}
+			if last_t != 0 {
+				t += (this_t - last_t) * speedKnob * SPEED
+			}
+			last_t = this_t
+
 			// fill in bytes slice
 			for ii := 0; ii < n_pixels; ii++ {
 				//--------------------------------------------------------------------------------
@@ -92,9 +96,9 @@ func MakePatternChevron(locations []float64) ByteThread {
 				_ = zp
 
 				// bend space so that things seem to accelerate upwards
-				zp1 := math.Pow(zp+0.02, 2 - DISPERSAL)
+				zp1 := math.Pow(zp+0.02, 2-DISPERSAL)
 				zp2 := math.Pow(zp+0.02, 2)
-				zp3 := math.Pow(zp+0.02, 2 + DISPERSAL)
+				zp3 := math.Pow(zp+0.02, 2+DISPERSAL)
 
 				if xp < 0 {
 					xp = -xp
@@ -102,12 +106,12 @@ func MakePatternChevron(locations []float64) ByteThread {
 
 				// cos: offset, period, min, max
 
-                // white wave
+				// white wave
 				rA := 0.8 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp1, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
 				gA := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp2, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
 				bA := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
 
-                // red wave
+				// red wave
 				rB := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
 				gB := 0.5 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp2, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
 				bB := 0.5 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp1, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
@@ -117,8 +121,8 @@ func MakePatternChevron(locations []float64) ByteThread {
 				// gB = 0.4 //+ colorutils.Cos(t, 0, 7.37, -0.1, 0.3)
 				// bB = 0.5 //+ colorutils.Cos(t, 0, 7.43, -0.1, 0.3)
 
-                blendOffset := t * BLEND_SPEED
-                //blendOffset := colorutils.Cos(t, 0, 6, -0.8, 0.8)
+				blendOffset := t * BLEND_SPEED
+				//blendOffset := colorutils.Cos(t, 0, 6, -0.8, 0.8)
 				blend := colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp/3-zp, blendOffset, BLEND_PERIOD, 0, 1), BLEND_THRESH, BLEND_THRESH_AMT), 0, 1)
 
 				bytes[ii*3+0] = colorutils.FloatToByte(rA*blend + rB*(1-blend))
