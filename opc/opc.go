@@ -19,26 +19,27 @@ import (
 // PATTERN REGISTRY
 
 var PATTERN_REGISTRY map[string](func(locations []float64) ByteThread)
+
 func init() {
-    // This has to happen in init() to avoid an initialization loop (circular dependency)
-    // because the midi-switcher pattern reads from this map.
-    PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
-        "basic-midi":      MakePatternBasicMidi,
-        "diamond":         MakePatternDiamond,
-        "eye":             MakePatternEye,
-        "fire":            MakePatternFire,
-        "midi-switcher":   MakePatternMidiSwitcher,
-        "moire":           MakePatternMoire,
-        "off":             MakePatternOff,
-        "raver-plaid":     MakePatternRaverPlaid,
-        "sailor-moon":     MakePatternSailorMoon,
-        "shield":          MakePatternShield,
-        "spatial-stripes": MakePatternSpatialStripes,
-        "test":            MakePatternTest,
-        "test-gamma":      MakePatternTestGamma,
-        "test-rgb":        MakePatternTestRGB,
-        "white":           MakePatternWhite,
-    }
+	// This has to happen in init() to avoid an initialization loop (circular dependency)
+	// because the midi-switcher pattern reads from this map.
+	PATTERN_REGISTRY = map[string](func(locations []float64) ByteThread){
+		"basic-midi":      MakePatternBasicMidi,
+		"diamond":         MakePatternDiamond,
+		"eye":             MakePatternEye,
+		"fire":            MakePatternFire,
+		"midi-switcher":   MakePatternMidiSwitcher,
+		"moire":           MakePatternMoire,
+		"off":             MakePatternOff,
+		"raver-plaid":     MakePatternRaverPlaid,
+		"sailor-moon":     MakePatternSailorMoon,
+		"shield":          MakePatternShield,
+		"spatial-stripes": MakePatternSpatialStripes,
+		"test":            MakePatternTest,
+		"test-gamma":      MakePatternTestGamma,
+		"test-rgb":        MakePatternTestRGB,
+		"white":           MakePatternWhite,
+	}
 }
 
 //--------------------------------------------------------------------------------
@@ -220,7 +221,7 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 				g = 128 | (g >> 1)
 				b = 128 | (b >> 1)
 				// swap to [g r b] order
-				if ii < 160 {
+				if ii < 160*3 {
 					// copper-colored strip
 					spiBytes = append(spiBytes, g)
 					spiBytes = append(spiBytes, r)
@@ -297,12 +298,12 @@ func MakeSendToOpcThread(ipPort string) ByteThread {
 
 			// ok, at this point the connection is good
 
-            // gamma correct
-            // HACK: change this later when we decide if OPC should have
-            // pixels in perceptual or linear space
-			for ii := range(bytes) {
+			// gamma correct
+			// HACK: change this later when we decide if OPC should have
+			// pixels in perceptual or linear space
+			for ii := range bytes {
 				bytes[ii] = gamma_lookup[bytes[ii+0]]
-            }
+			}
 
 			// make and send OPC header
 			channel := byte(0)
