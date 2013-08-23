@@ -12,23 +12,26 @@ import (
 
 func MakePatternShield(locations []float64) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
-        last_t := 0.0
-        t := 0.0
+		last_t := 0.0
+		t := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 
-            // time and speed knob bookkeeping
+			// time and speed knob bookkeeping
 			this_t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
 			speedKnob := float64(midiState.ControllerValues[config.SPEED_KNOB]) / 127.0
-            if speedKnob < 0.5 {
-                speedKnob = colorutils.RemapAndClamp(speedKnob, 0, 0.4, 0, 1)
-            } else {
-                speedKnob = colorutils.RemapAndClamp(speedKnob, 0.6, 1, 1, 4)
-            }
-            if last_t != 0 {
-                t += (this_t - last_t) * speedKnob
-            }
-            last_t = this_t
+			if speedKnob < 0.5 {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0, 0.4, 0, 1)
+			} else {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0.6, 1, 1, 4)
+			}
+			if midiState.KeyVolumes[config.SLOWMO_PAD] > 0 {
+				speedKnob *= 0.25
+			}
+			if last_t != 0 {
+				t += (this_t - last_t) * speedKnob
+			}
+			last_t = this_t
 
 			// fill in bytes slice
 			for ii := 0; ii < n_pixels; ii++ {

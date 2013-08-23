@@ -12,7 +12,7 @@ new patterns
 new effects
     ripple pad
     slowmo pad
-    blink various regions
+        blink various regions
     red, green, blue blinks
     hue, sat knobs
     color extract knob

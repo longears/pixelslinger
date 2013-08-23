@@ -50,6 +50,9 @@ func MakePatternFire(locations []float64) ByteThread {
             } else {
                 speedKnob = colorutils.RemapAndClamp(speedKnob, 0.6, 1, 1, 4)
             }
+			if midiState.KeyVolumes[config.SLOWMO_PAD] > 0 {
+                speedKnob *=  0.25
+            }
             if last_t != 0 {
                 t += (this_t - last_t) * speedKnob * SPEED
             }
