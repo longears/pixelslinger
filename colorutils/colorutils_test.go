@@ -392,7 +392,8 @@ func BenchmarkGamma(b *testing.B) {
 //================================================================================
 func hslToRgbTestHelper(t *testing.T, h, s, l, r, g, b float64) {
 	rr, gg, bb := HslToRgb(h, s, l)
-	if r != rr || g != gg || b != bb {
+	epsilon := 0.001
+	if math.Abs(r-rr) > epsilon || math.Abs(g-gg) > epsilon || math.Abs(b-bb) > epsilon {
 		t.Errorf("HslToRgb(%f,%f,%f) = %f,%f,%f, want %f,%f,%f", h, s, l, rr, gg, bb, r, g, b)
 	}
 }
@@ -408,6 +409,13 @@ func TestHslToRgb(t *testing.T) {
 	hslToRgbTestHelper(t, 3.0/6, 1.0, 0.5, 0.0, 1.0, 1.0)
 	hslToRgbTestHelper(t, 4.0/6, 1.0, 0.5, 0.0, 0.0, 1.0)
 	hslToRgbTestHelper(t, 5.0/6, 1.0, 0.5, 1.0, 0.0, 1.0)
+
+	hslToRgbTestHelper(t, 1.0/6-3, 1.0, 0.5, 1.0, 1.0, 0.0)
+	hslToRgbTestHelper(t, 1.0/6-2, 1.0, 0.5, 1.0, 1.0, 0.0)
+	hslToRgbTestHelper(t, 1.0/6-1, 1.0, 0.5, 1.0, 1.0, 0.0)
+	hslToRgbTestHelper(t, 1.0/6+0, 1.0, 0.5, 1.0, 1.0, 0.0)
+	hslToRgbTestHelper(t, 1.0/6+1, 1.0, 0.5, 1.0, 1.0, 0.0)
+	hslToRgbTestHelper(t, 1.0/6+3, 1.0, 0.5, 1.0, 1.0, 0.0)
 
 	hslToRgbTestHelper(t, 0.0/3, 0.5, 0.5, 0.75, 0.25, 0.25)
 }
