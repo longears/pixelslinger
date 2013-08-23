@@ -218,9 +218,13 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 				g := gamma_lookup[bytes[ii+1]]
 				b := gamma_lookup[bytes[ii+2]]
 
-				// white balance for the white stripes
+				// HACK
+				// white balance for the strips with white backing
+				// red needs a boost
+				// green and blue are too strong
 				if ii >= 160*3 {
-					g = byte(float64(b) * 0.75)
+					r = byte(math.Pow(float64(r), 0.7))
+					g = byte(float64(g) * 0.75)
 					b = byte(float64(b) * 0.6)
 				}
 
