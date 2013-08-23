@@ -21,7 +21,8 @@ const (
 	EYELID_KNOB = midi.LPD8_KNOB2
 	SPEED_KNOB  = midi.LPD8_KNOB3
 	SWITCH_KNOB = midi.LPD8_KNOB4
-	MORPH_KNOB  = midi.LPD8_KNOB5 // todo
+	MORPH_KNOB  = midi.LPD8_KNOB5
+	HUE_KNOB    = midi.LPD8_KNOB6
 )
 
 // knob starting values before they have been moved
@@ -35,5 +36,6 @@ func init() {
 		SPEED_KNOB:  63,
 		SWITCH_KNOB: 0,
 		MORPH_KNOB:  0,
+		HUE_KNOB:    0,
 	}
 }

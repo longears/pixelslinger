@@ -39,6 +39,7 @@ func MakePatternDiamond(locations []float64) ByteThread {
 			var (
 				// 0 to 1.  0 is large blend, 1 is tiny blend
 				MORPH = float64(midiState.ControllerValues[config.MORPH_KNOB]) / 127.0
+				HUE   = float64(midiState.ControllerValues[config.HUE_KNOB]) / 127.0
 
 				SPEED = 0.83 // Overall speed. This is applied in addition to the speed knob.
 
@@ -121,9 +122,10 @@ func MakePatternDiamond(locations []float64) ByteThread {
 				bA := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
 
 				// red wave
-				rB := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
-				gB := 0.5 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp2, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
-				bB := 0.5 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp1, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
+				rB, gB, bB := colorutils.HslToRgb(HUE, 1.0, 0.75)
+				rB *= colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
+				gB *= colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp2, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
+				bB *= colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp1, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
 
 				// // accent color
 				// rB = 0.3 //+ colorutils.Cos(t, 0, 7.30, -0.1, 0.3)

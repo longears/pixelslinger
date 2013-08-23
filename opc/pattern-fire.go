@@ -40,8 +40,8 @@ func MakePatternFire(locations []float64) ByteThread {
                 SPEED      = 0.83 // How quick are the flames?  This is applied in addition to the speed knob.
                 SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
 
-                // morph knob controls hue
-                H = 0.05 + float64(midiState.ControllerValues[config.MORPH_KNOB]) / 127.0
+                // hue knob controls hue
+                H = 0.05 + float64(midiState.ControllerValues[config.HUE_KNOB]) / 127.0
                 S = 0.9
                 V = 0.65
                 OVERBRIGHT = 1.3
