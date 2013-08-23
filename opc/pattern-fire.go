@@ -15,11 +15,6 @@ import (
 
 func MakePatternFire(locations []float64) ByteThread {
 
-    var (
-        SPEED      = 0.83 // How quick are the flames?  This is applied in addition to the speed knob.
-        SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
-    )
-
     // get bounding box
     n_pixels := len(locations) / 3
     var max_coord_x, max_coord_y, max_coord_z float64
@@ -40,6 +35,18 @@ func MakePatternFire(locations []float64) ByteThread {
         last_t := 0.0
         t := 0.0
 		for bytes := range bytesIn {
+
+            var (
+                SPEED      = 0.83 // How quick are the flames?  This is applied in addition to the speed knob.
+                SIDE_SCALE = 1.7  // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
+
+                // morph knob controls hue
+                H = 0.05 + float64(midiState.ControllerValues[config.MORPH_KNOB]) / 127.0
+                S = 0.9
+                V = 0.65
+                OVERBRIGHT = 1.3
+            )
+
 			n_pixels := len(bytes) / 3
 
             // time and speed knob bookkeeping
@@ -120,13 +127,13 @@ func MakePatternFire(locations []float64) ByteThread {
                 //v = colorutils.Cos2( colorutils.Clamp(v,0,1), 0, 2, 1, 0 )
 
                 // color map
-                r = v * 1.5
-                g = v * 0.65
-                b = v * 0.34 * 0.7
+                rFire, gFire, bFire := colorutils.HslToRgb(H, S, V)
+                r = v * rFire * OVERBRIGHT
+                g = v * gFire * OVERBRIGHT
+                b = v * bFire * OVERBRIGHT
 
-                r,g,b = colorutils.ContrastRgb(r,g,b, 0.7, 1.2)
-
-                //r,g,b = colorutils.RGBClipBlackByLuminance(r,g,b, 0.2)
+                r,g,b = colorutils.ContrastRgb(r,g,b, 0.7, 1.1)
+                // r,g,b = colorutils.RGBClipBlackByLuminance(r,g,b, 0.2)  // TODO
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
 				bytes[ii*3+1] = colorutils.FloatToByte(g)
