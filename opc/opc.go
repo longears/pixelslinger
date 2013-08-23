@@ -28,6 +28,7 @@ func init() {
 		"diamond":         MakePatternDiamond,
 		"eye":             MakePatternEye,
 		"fire":            MakePatternFire,
+		"japan":           MakePatternJapan,
 		"midi-switcher":   MakePatternMidiSwitcher,
 		"moire":           MakePatternMoire,
 		"off":             MakePatternOff,
