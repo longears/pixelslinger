@@ -125,8 +125,27 @@ func MakePatternSunset(locations []float64) ByteThread {
 	var (
 		IMG_PATH = "images/sky3_square.png"
 		//IMG_PATH = "images/r.png"
+		DAY_LENGTH = 20.0
+        SUN_SOFT_EDGE = 0.2
 	)
 
+	// get bounding box
+	n_pixels := len(locations) / 3
+	var max_coord_x, max_coord_y, max_coord_z float64
+	var min_coord_x, min_coord_y, min_coord_z float64
+	for ii := 0; ii < n_pixels; ii++ {
+		x := locations[ii*3+0]
+		y := locations[ii*3+1]
+		z := locations[ii*3+2]
+        if ii == 0 || x > max_coord_x { max_coord_x = x }
+        if ii == 0 || y > max_coord_y { max_coord_y = y }
+        if ii == 0 || z > max_coord_z { max_coord_z = z }
+        if ii == 0 || x < min_coord_x { min_coord_x = x }
+        if ii == 0 || y < min_coord_y { min_coord_y = y }
+        if ii == 0 || z < min_coord_z { min_coord_z = z }
+	}
+
+	// load image
 	myImage := &MyImage{}
 	myImage.populateFromImage(IMG_PATH)
 
@@ -146,7 +165,50 @@ func MakePatternSunset(locations []float64) ByteThread {
 				_ = y
 				_ = z
 
-				r, g, b := myImage.getInterpolatedColor(-x, -z, "tile")
+				zp := colorutils.Remap(z, min_coord_z, max_coord_z, 0, 1)
+
+				// time of day, cycles through range 0 to 1.  0 is midnight, 0.5 is noon
+                // sunrise at 0.25, sunset at 0.75
+				timeOfDay := colorutils.PosMod2(t/DAY_LENGTH, 1)
+
+				// compute sun height in range 0 to 1
+				sunHeight := 0.0
+				SUNRISE_TIME := 0.2 // range 0 to 0.25
+				switch {
+				case timeOfDay < 0.25-SUNRISE_TIME:
+					sunHeight = 0
+				case timeOfDay < 0.25+SUNRISE_TIME:
+					sunHeight = colorutils.EaseRemapAndClamp(timeOfDay, 0.25-SUNRISE_TIME, 0.25+SUNRISE_TIME, 0, 1)
+				case timeOfDay < 0.75-SUNRISE_TIME:
+					sunHeight = 1
+				case timeOfDay < 0.75+SUNRISE_TIME:
+					sunHeight = colorutils.EaseRemapAndClamp(timeOfDay, 0.75-SUNRISE_TIME, 0.75+SUNRISE_TIME, 1, 0)
+				default:
+					sunHeight = 0
+				}
+
+                // sky color
+                r, g, b := myImage.getInterpolatedColor(timeOfDay+0.5, 1-zp, "tile")
+
+                //// stars
+                //starAmt := 1 - sunHeight
+                //if ii >= 160 {
+                //    
+                //}
+
+                // sun circle
+                if ii < 160 {
+                    pct := float64(ii) / 160.0
+                    pct = pct * 2
+                    if pct > 1 {
+                        pct = 2 - pct
+                    }
+                    val := colorutils.Contrast(pct, colorutils.Remap(sunHeight, 0, 1, -SUN_SOFT_EDGE*2, 1+SUN_SOFT_EDGE*2), 1/SUN_SOFT_EDGE)
+                    val = colorutils.Clamp(1-val, 0, 1)
+                    r = val * 1.13
+                    g = val * 0.85
+                    b = val * 0.65
+                }
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
 				bytes[ii*3+1] = colorutils.FloatToByte(g)
