@@ -8,6 +8,7 @@ import (
 	_ "image/color"
 	_ "image/png"
 	"math"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -19,6 +20,7 @@ func handleErr(err error) {
 }
 
 //================================================================================
+// IMAGE
 
 type MyColor struct {
 	r float64
@@ -119,15 +121,26 @@ func (mi *MyImage) getInterpolatedColor(x, y float64, wrapMethod string) (r, g, 
 }
 
 //================================================================================
+// PIXEL PATTERN
 
 func MakePatternSunset(locations []float64) ByteThread {
 
 	var (
 		IMG_PATH = "images/sky3_square.png"
-		//IMG_PATH = "images/r.png"
-		DAY_LENGTH = 20.0
-        SUN_SOFT_EDGE = 0.2
+		DAY_LENGTH          = 20.0 // seconds
+		SUN_SOFT_EDGE       = 0.2
+		STAR_BRIGHTNESS_EXP = 2.7  // higher number means fewer bright stars
+		STAR_THRESH         = 0.95
+		STAR_CONTRAST       = 3.0
+		STAR_FADE_EXP       = 4.0  // higher numbers keep stars from showing during sunrise/sunset
 	)
+
+	// make persistant random values
+	rng := rand.New(rand.NewSource(9))
+	randomValues := make([]float64, len(locations)/3)
+	for ii := range randomValues {
+		randomValues[ii] = math.Pow(rng.Float64(), STAR_BRIGHTNESS_EXP)
+	}
 
 	// get bounding box
 	n_pixels := len(locations) / 3
@@ -168,7 +181,7 @@ func MakePatternSunset(locations []float64) ByteThread {
 				zp := colorutils.Remap(z, min_coord_z, max_coord_z, 0, 1)
 
 				// time of day, cycles through range 0 to 1.  0 is midnight, 0.5 is noon
-                // sunrise at 0.25, sunset at 0.75
+				// sunrise at 0.25, sunset at 0.75
 				timeOfDay := colorutils.PosMod2(t/DAY_LENGTH, 1)
 
 				// compute sun height in range 0 to 1
@@ -187,28 +200,37 @@ func MakePatternSunset(locations []float64) ByteThread {
 					sunHeight = 0
 				}
 
-                // sky color
-                r, g, b := myImage.getInterpolatedColor(timeOfDay+0.5, 1-zp, "tile")
+				// sky color
+				r, g, b := myImage.getInterpolatedColor(timeOfDay+0.5, 1-zp, "tile")
 
-                //// stars
-                //starAmt := 1 - sunHeight
-                //if ii >= 160 {
-                //    
-                //}
+				// stars
+				if ii >= 160 {
+					// day/night
+					starAmt := math.Pow(1-sunHeight, STAR_FADE_EXP)
+					// fade at horizon
+					starAmt *= math.Pow(colorutils.RemapAndClamp(zp, 0.35, 0.48, 0, 1), 2)
+					// individual stars
+					starAmt *= colorutils.Clamp(colorutils.Contrast(randomValues[ii], STAR_THRESH, STAR_CONTRAST), 0, 1)
+					// twinkle
+					starAmt *= colorutils.Cos(t, randomValues[ii], 0.3+2*colorutils.PosMod2(randomValues[ii]*7, 1), 0.6, 1)
+					r += starAmt
+					g += starAmt
+					b += starAmt
+				}
 
-                // sun circle
-                if ii < 160 {
-                    pct := float64(ii) / 160.0
-                    pct = pct * 2
-                    if pct > 1 {
-                        pct = 2 - pct
-                    }
-                    val := colorutils.Contrast(pct, colorutils.Remap(sunHeight, 0, 1, -SUN_SOFT_EDGE*2, 1+SUN_SOFT_EDGE*2), 1/SUN_SOFT_EDGE)
-                    val = colorutils.Clamp(1-val, 0, 1)
-                    r = val * 1.13
-                    g = val * 0.85
-                    b = val * 0.65
-                }
+				// sun circle
+				if ii < 160 {
+					pct := float64(ii) / 160.0
+					pct = pct * 2
+					if pct > 1 {
+						pct = 2 - pct
+					}
+					val := colorutils.Contrast(pct, colorutils.Remap(sunHeight, 0, 1, -SUN_SOFT_EDGE*2, 1+SUN_SOFT_EDGE*2), 1/SUN_SOFT_EDGE)
+					val = colorutils.Clamp(1-val, 0, 1)
+					r = val * 1.13
+					g = val * 0.85
+					b = val * 0.65
+				}
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
 				bytes[ii*3+1] = colorutils.FloatToByte(g)
