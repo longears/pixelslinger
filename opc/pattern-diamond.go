@@ -33,36 +33,36 @@ func MakePatternDiamond(locations []float64) ByteThread {
 
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 
-		var (
-			// 0 to 1.  0 is large blend, 1 is tiny blend
-			MORPH = float64(midiState.ControllerValues[config.MORPH_KNOB]) / 127.0
-
-			SPEED = 0.83 // Overall speed. This is applied in addition to the speed knob.
-
-			SIDE_SCALE = 1.0 // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
-
-			DISPERSAL = 0.2 // how much of a chromatic aberration effect
-
-			WHITE_WAVE_PERIOD = 0.4
-			WHITE_WAVE_SPEED  = 0.58 // positive is down
-			WHITE_WAVE_THRESH = 0.9
-
-			RED_WAVE_PERIOD = 0.4
-			RED_WAVE_SPEED  = 0.2 // positive is down
-			RED_WAVE_THRESH = 0.9
-
-			BLEND_PERIOD     = 0.3
-			BLEND_SPEED      = -0.33                      // positive is down
-			BLEND_THRESH     = 0.5*(1-MORPH) + 0.99*MORPH // 1 is red, 0 is white
-			BLEND_THRESH_AMT = 2.0*(1-MORPH) + 5.0*MORPH  // contrast amount
-		)
-		if MORPH < 0.1 {
-			BLEND_SPEED = -BLEND_SPEED
-		}
-
 		last_t := 0.0
 		t := 0.0
 		for bytes := range bytesIn {
+			var (
+				// 0 to 1.  0 is large blend, 1 is tiny blend
+				MORPH = float64(midiState.ControllerValues[config.MORPH_KNOB]) / 127.0
+
+				SPEED = 0.83 // Overall speed. This is applied in addition to the speed knob.
+
+				SIDE_SCALE = 1.0 // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
+
+				DISPERSAL = 0.2 // how much of a chromatic aberration effect
+
+				WHITE_WAVE_PERIOD = 0.4
+				WHITE_WAVE_SPEED  = 0.58 // positive is down
+				WHITE_WAVE_THRESH = 0.9
+
+				RED_WAVE_PERIOD = 0.4
+				RED_WAVE_SPEED  = 0.2 // positive is down
+				RED_WAVE_THRESH = 0.9
+
+				BLEND_PERIOD     = 0.3
+				BLEND_SPEED      = -0.33                      // positive is down
+				BLEND_THRESH     = 0.5*(1-MORPH) + 0.99*MORPH // 1 is red, 0 is white
+				BLEND_THRESH_AMT = 2.0*(1-MORPH) + 5.0*MORPH  // contrast amount
+			)
+			if MORPH < 0.1 {
+				BLEND_SPEED = -BLEND_SPEED
+			}
+
 			n_pixels := len(bytes) / 3
 
 			// time and speed knob bookkeeping
