@@ -34,7 +34,9 @@ func MakePatternDiamond(locations []float64) ByteThread {
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 
 		var (
-			MORPH = 0.00 // 0 to 1.  0 is large blend, 1 is tiny blend
+			// 0 to 1.  0 is large blend, 1 is tiny blend
+			MORPH = float64(midiState.ControllerValues[config.MORPH_KNOB]) / 127.0
+
 			SPEED = 0.83 // Overall speed. This is applied in addition to the speed knob.
 
 			SIDE_SCALE = 1.0 // Horizontal scale (x and y).  Smaller numbers compress things horizontally.
