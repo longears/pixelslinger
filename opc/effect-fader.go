@@ -39,12 +39,24 @@ func MakeEffectFader(locations []float64) ByteThread {
 			x := locations[ii*3+0]
 			y := locations[ii*3+1]
 			z := locations[ii*3+2]
-            if ii == 0 || x > max_coord_x { max_coord_x = x }
-            if ii == 0 || y > max_coord_y { max_coord_y = y }
-            if ii == 0 || z > max_coord_z { max_coord_z = z }
-            if ii == 0 || x < min_coord_x { min_coord_x = x }
-            if ii == 0 || y < min_coord_y { min_coord_y = y }
-            if ii == 0 || z < min_coord_z { min_coord_z = z }
+			if ii == 0 || x > max_coord_x {
+				max_coord_x = x
+			}
+			if ii == 0 || y > max_coord_y {
+				max_coord_y = y
+			}
+			if ii == 0 || z > max_coord_z {
+				max_coord_z = z
+			}
+			if ii == 0 || x < min_coord_x {
+				min_coord_x = x
+			}
+			if ii == 0 || y < min_coord_y {
+				min_coord_y = y
+			}
+			if ii == 0 || z < min_coord_z {
+				min_coord_z = z
+			}
 		}
 
 		// make persistant random values
@@ -88,6 +100,9 @@ func MakeEffectFader(locations []float64) ByteThread {
 			// eyelid knob
 			eyelidKnob := float64(midiState.ControllerValues[config.EYELID_KNOB]) / 127.0
 			eyelidKnob = colorutils.Clamp(colorutils.Remap(eyelidKnob, 0.05, 0.95, 0, 1), 0, 1)
+
+			// saturation knob
+			satKnob := float64(midiState.ControllerValues[config.SAT_KNOB]) / 127.0
 
 			// fill in bytes array
 			for ii := 0; ii < n_pixels; ii++ {
@@ -161,6 +176,14 @@ func MakeEffectFader(locations []float64) ByteThread {
 					r = 1
 					g = 1
 					b = 1
+				}
+
+				// saturation
+				if satKnob != 127 {
+					gray := (r + g + b) / 3.0 * 1.3 // boost it a little bit
+					r = r*satKnob + gray*(1-satKnob)
+					g = g*satKnob + gray*(1-satKnob)
+					b = b*satKnob + gray*(1-satKnob)
 				}
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)

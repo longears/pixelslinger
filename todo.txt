@@ -15,5 +15,6 @@ new effects
         slowmo pad
         blink various regions
     red, green, blue blinks
-    hue, sat knobs
+        hue knob
+        saturation knob
     color extract knob

@@ -23,6 +23,7 @@ const (
 	SWITCH_KNOB = midi.LPD8_KNOB4
 	MORPH_KNOB  = midi.LPD8_KNOB5
 	HUE_KNOB    = midi.LPD8_KNOB6
+	SAT_KNOB    = midi.LPD8_KNOB7
 )
 
 // knob starting values before they have been moved
@@ -37,5 +38,6 @@ func init() {
 		SWITCH_KNOB: 0,
 		MORPH_KNOB:  0,
 		HUE_KNOB:    0,
+		SAT_KNOB:    0,
 	}
 }
