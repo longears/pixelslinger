@@ -74,6 +74,11 @@ func MakeEffectFader(locations []float64) ByteThread {
 				lastTwinkleTime = t
 			}
 
+			// blink regions
+			blinkCirclePad := float64(midiState.KeyVolumes[config.BLINK_CIRCLE_PAD]) / 127.0
+			blinkArchPad := float64(midiState.KeyVolumes[config.BLINK_ARCH_PAD]) / 127.0
+			blinkBackPad := float64(midiState.KeyVolumes[config.BLINK_BACK_PAD]) / 127.0
+
 			// gain knob
 			gainKnob := float64(midiState.ControllerValues[config.GAIN_KNOB]) / 127.0
 			gain0 := colorutils.Clamp(colorutils.Remap(gainKnob, 0.75, 0.95, 0, 1), 0, 1)
@@ -139,6 +144,23 @@ func MakeEffectFader(locations []float64) ByteThread {
 					r += thisTwinkle
 					g += thisTwinkle
 					b += thisTwinkle
+				}
+
+				// blink regions
+				if blinkCirclePad > 0 && ii < 160*1 {
+					r = 1
+					g = 1
+					b = 1
+				}
+				if blinkArchPad > 0 && 160*1 <= ii && ii < 160*3 {
+					r = 1
+					g = 1
+					b = 1
+				}
+				if blinkBackPad > 0 && 160*3 <= ii && ii < 160*5 {
+					r = 1
+					g = 1
+					b = 1
 				}
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)
