@@ -237,3 +237,41 @@ func GammaRgb(r, g, b, gamma float64) (float64, float64, float64) {
 	}
 	return r, g, b
 }
+
+// Inputs in the range 0-1.
+// Results in the range 0-1.
+func HslToRgb(h, s, l float64) (r, g, b float64) {
+	_, ramp := math.Modf(h * 3) // Modf is equal to mod 1
+	_, h = math.Modf(h)
+	switch {
+	case 0.0/3 <= h && h < 1.0/3:
+		r = 1 - ramp
+		g = ramp
+		b = 0
+	case 1.0/3 <= h && h < 2.0/3:
+		r = 0
+		g = 1 - ramp
+		b = ramp
+	case 2.0/3 <= h && h < 3.0/3:
+		r = ramp
+		g = 0
+		b = 1 - ramp
+	}
+	// average towards middle gray to apply saturation
+	r = r*s + 0.5*(1-s)
+	g = g*s + 0.5*(1-s)
+	b = b*s + 0.5*(1-s)
+	if l < 0.5 {
+		// darken
+		r *= (l * 2)
+		g *= (l * 2)
+		b *= (l * 2)
+	} else {
+		// lighten
+		blend := (l - 0.5) * 2
+		r = r*(1-blend) + 1*blend
+		g = g*(1-blend) + 1*blend
+		b = b*(1-blend) + 1*blend
+	}
+	return r, g, b
+}

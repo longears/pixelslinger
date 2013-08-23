@@ -388,3 +388,26 @@ func BenchmarkGamma(b *testing.B) {
 		Gamma(0.7, 0.7)
 	}
 }
+
+//================================================================================
+func hslToRgbTestHelper(t *testing.T, h, s, l, r, g, b float64) {
+	rr, gg, bb := HslToRgb(h, s, l)
+	if r != rr || g != gg || b != bb {
+		t.Errorf("HslToRgb(%f,%f,%f) = %f,%f,%f, want %f,%f,%f", h, s, l, rr, gg, bb, r, g, b)
+	}
+}
+func TestHslToRgb(t *testing.T) {
+	// h,s,l, r,g,b
+	hslToRgbTestHelper(t, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+	hslToRgbTestHelper(t, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5)
+	hslToRgbTestHelper(t, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0)
+
+	hslToRgbTestHelper(t, 0.0/3, 1.0, 0.5, 1.0, 0.0, 0.0)
+	hslToRgbTestHelper(t, 0.5/3, 1.0, 0.5, 0.5, 0.5, 0.0)
+	hslToRgbTestHelper(t, 1.0/3, 1.0, 0.5, 0.0, 1.0, 0.0)
+	hslToRgbTestHelper(t, 1.5/3, 1.0, 0.5, 0.0, 0.5, 0.5)
+	hslToRgbTestHelper(t, 2.0/3, 1.0, 0.5, 0.0, 0.0, 1.0)
+	hslToRgbTestHelper(t, 2.5/3, 1.0, 0.5, 0.5, 0.0, 0.5)
+
+	hslToRgbTestHelper(t, 0.0/3, 0.5, 0.5, 0.75, 0.25, 0.25)
+}
