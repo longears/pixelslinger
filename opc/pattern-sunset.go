@@ -126,7 +126,7 @@ func (mi *MyImage) getInterpolatedColor(x, y float64, wrapMethod string) (r, g, 
 func MakePatternSunset(locations []float64) ByteThread {
 
 	var (
-		IMG_PATH = "images/sky3_square.png"
+		IMG_PATH = "images/sky4_square.png"
 		DAY_LENGTH          = 20.0 // seconds
 		SUN_SOFT_EDGE       = 0.2
 		STAR_BRIGHTNESS_EXP = 2.7  // higher number means fewer bright stars
