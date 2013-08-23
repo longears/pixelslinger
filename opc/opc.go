@@ -223,7 +223,7 @@ func MakeSendToLPD8806Thread(spiFn string) ByteThread {
 				// red needs a boost
 				// green and blue are too strong
 				if ii >= 160*3 {
-					r = byte(math.Pow(float64(r), 0.7))
+					r = byte(math.Pow(float64(r)/256.0, 0.7) * 256.0)
 					g = byte(float64(g) * 0.75)
 					b = byte(float64(b) * 0.6)
 				}
