@@ -82,13 +82,16 @@ func MakePatternDiamond(locations []float64) ByteThread {
 			}
 			last_t = this_t
 
+			// red (secondary) color
+			rBRaw, gBRaw, bBRaw := colorutils.HslToRgb(HUE, 1.0, 0.75)
+
 			// fill in bytes slice
 			for ii := 0; ii < n_pixels; ii++ {
 				//--------------------------------------------------------------------------------
 
 				// make moving stripes for x, y, and z
 				x := locations[ii*3+0]
-				y := locations[ii*3+1]
+				//y := locations[ii*3+1]
 				z := locations[ii*3+2]
 
 				// scale the height (z) of the layout to fit in the range 0-1
@@ -98,12 +101,8 @@ func MakePatternDiamond(locations []float64) ByteThread {
 					z_scale = 0.05
 				}
 				xp := x / z_scale / SIDE_SCALE
-				yp := y / z_scale / SIDE_SCALE
+				//yp := y / z_scale / SIDE_SCALE
 				zp := (z - min_coord_z) / z_scale
-
-				_ = xp
-				_ = yp
-				_ = zp
 
 				// bend space so that things seem to accelerate upwards
 				zp1 := math.Pow(zp+0.02, 2-DISPERSAL)
@@ -117,24 +116,23 @@ func MakePatternDiamond(locations []float64) ByteThread {
 				// cos: offset, period, min, max
 
 				// white wave
-				rA := 0.8 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp1, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
-				gA := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp2, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
-				bA := 1.0 * colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2), 0, 1)
+				rA := 0.8 * colorutils.ContrastAndClamp(colorutils.Cos2(xp-zp1, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2, 0, 1)
+				gA := 1.0 * colorutils.ContrastAndClamp(colorutils.Cos2(xp-zp2, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2, 0, 1)
+				bA := 1.0 * colorutils.ContrastAndClamp(colorutils.Cos2(xp-zp3, t*WHITE_WAVE_SPEED, WHITE_WAVE_PERIOD, 0, 1), WHITE_WAVE_THRESH, 2, 0, 1)
 
 				// red wave
-				rB, gB, bB := colorutils.HslToRgb(HUE, 1.0, 0.75)
-				rB *= colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp3, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
-				gB *= colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp2, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
-				bB *= colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp-zp1, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2), 0, 1)
+				rB := rBRaw * colorutils.ContrastAndClamp(colorutils.Cos2(xp-zp3, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2, 0, 1)
+				gB := gBRaw * colorutils.ContrastAndClamp(colorutils.Cos2(xp-zp2, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2, 0, 1)
+				bB := bBRaw * colorutils.ContrastAndClamp(colorutils.Cos2(xp-zp1, t*RED_WAVE_SPEED, RED_WAVE_PERIOD, 0, 1), RED_WAVE_THRESH, 2, 0, 1)
 
 				// // accent color
-				// rB = 0.3 //+ colorutils.Cos(t, 0, 7.30, -0.1, 0.3)
-				// gB = 0.4 //+ colorutils.Cos(t, 0, 7.37, -0.1, 0.3)
-				// bB = 0.5 //+ colorutils.Cos(t, 0, 7.43, -0.1, 0.3)
+				// rB = 0.3 //+ colorutils.Cos2(t, 0, 7.30, -0.1, 0.3)
+				// gB = 0.4 //+ colorutils.Cos2(t, 0, 7.37, -0.1, 0.3)
+				// bB = 0.5 //+ colorutils.Cos2(t, 0, 7.43, -0.1, 0.3)
 
 				blendOffset := t * BLEND_SPEED
-				//blendOffset := colorutils.Cos(t, 0, 6, -0.8, 0.8)
-				blend := colorutils.Clamp(colorutils.Contrast(colorutils.Cos(xp/3-zp, blendOffset, BLEND_PERIOD, 0, 1), BLEND_THRESH, BLEND_THRESH_AMT), 0, 1)
+				//blendOffset := colorutils.Cos2(t, 0, 6, -0.8, 0.8)
+				blend := colorutils.ContrastAndClamp(colorutils.Cos2(xp/3-zp, blendOffset, BLEND_PERIOD, 0, 1), BLEND_THRESH, BLEND_THRESH_AMT, 0, 1)
 
 				bytes[ii*3+0] = colorutils.FloatToByte(rA*blend + rB*(1-blend))
 				bytes[ii*3+1] = colorutils.FloatToByte(gA*blend + gB*(1-blend))
