@@ -47,6 +47,9 @@ func MakePatternFire(locations []float64) ByteThread {
                 OVERBRIGHT = 1.3
             )
 
+            // fire color
+            rFire, gFire, bFire := colorutils.HslToRgb(H, S, V)
+
 			n_pixels := len(bytes) / 3
 
             // time and speed knob bookkeeping
@@ -64,6 +67,7 @@ func MakePatternFire(locations []float64) ByteThread {
                 t += (this_t - last_t) * speedKnob * SPEED
             }
             last_t = this_t
+
 
 			// fill in bytes array
 			var r, g, b float64
@@ -127,7 +131,6 @@ func MakePatternFire(locations []float64) ByteThread {
                 //v = colorutils.Cos2( colorutils.Clamp(v,0,1), 0, 2, 1, 0 )
 
                 // color map
-                rFire, gFire, bFire := colorutils.HslToRgb(H, S, V)
                 r = v * rFire * OVERBRIGHT
                 g = v * gFire * OVERBRIGHT
                 b = v * bFire * OVERBRIGHT
