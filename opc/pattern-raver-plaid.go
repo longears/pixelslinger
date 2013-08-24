@@ -5,6 +5,7 @@ package opc
 
 import (
 	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
 	"math"
 	"time"
@@ -41,11 +42,27 @@ func MakePatternRaverPlaid(locations []float64) ByteThread {
 		// The "spatial-stripes" pattern is a good example of that.
 
 		// Wait for the next incoming byte slice
+		last_t := 0.0
+		t := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 
-			// Get the current time in Unix seconds
-			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
+			// Get the current time in Unix seconds.
+			// This requires some time and speed knob bookkeeping
+			this_t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
+			speedKnob := float64(midiState.ControllerValues[config.SPEED_KNOB]) / 127.0
+			if speedKnob < 0.5 {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0, 0.4, 0, 1)
+			} else {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0.6, 1, 1, 4)
+			}
+			if midiState.KeyVolumes[config.SLOWMO_PAD] > 0 {
+				speedKnob *= 0.25
+			}
+			if last_t != 0 {
+				t += (this_t - last_t) * speedKnob
+			}
+			last_t = this_t
 
 			// For each pixel...
 			for ii := 0; ii < n_pixels; ii++ {
