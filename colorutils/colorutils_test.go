@@ -26,6 +26,27 @@ func TestCosTable(t *testing.T) {
 }
 
 //================================================================================
+func absTestHelper(t *testing.T, input, result float64) {
+	if tmp := Abs(input); tmp != result {
+		t.Errorf("Abs(%f) = %f, want %f", input, tmp, result)
+	}
+}
+func TestAbs(t *testing.T) {
+	absTestHelper(t, -1, 1)
+	absTestHelper(t, 1, 1)
+}
+func BenchmarkMathAbs(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		math.Abs(-1431.4)
+	}
+}
+func BenchmarkAbs(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Abs(-1431.4)
+	}
+}
+
+//================================================================================
 func posModTestHelper(t *testing.T, a, b, result float64) {
 	if tmp := PosMod(a, b); tmp != result {
 		t.Errorf("PosMod(%f,%f) = %f, want %f", a, b, tmp, result)

@@ -14,8 +14,9 @@ import (
 	"math/rand"
 )
 
+
 //================================================================================
-// OPTIMIZATIONS
+// INIT
 
 // Size of cosine lookup table.
 const TABLE_SIZE = 2048
@@ -34,16 +35,29 @@ func init() {
 	}
 }
 
+//================================================================================
+// OPTIMIZATIONS
+
 // Like math.Cos but using a lookup table.  About twice as fast.
 func CosTable(x float64) float64 {
 	pct := x / (math.Pi * 2)
-	ii := int64(pct*TABLE_SIZE + 0.5)
-	ii = ii % TABLE_SIZE
+	ii := int64(pct*TABLE_SIZE+0.5) % TABLE_SIZE
 	if ii < 0 {
 		ii += TABLE_SIZE
 	}
 	return COS_LOOKUP[ii]
 }
+
+// Faster version of math.Abs(a).
+func Abs(a float64) float64 {
+	if a > 0 {
+		return a
+	}
+	return -a
+}
+
+//================================================================================
+// MOD
 
 // Like math.Mod except the result is always positive, like in Python.
 func PosMod(a, b float64) float64 {
@@ -66,16 +80,22 @@ func PosMod2(a, b float64) float64 {
 	return result
 }
 
-// Faster version of math.Abs(a).
-func Abs(a float64) float64 {
-	if a > 0 {
-		return a
-	}
-	return -a
+// Return the distance between floats a and b, modulo n.
+// The result is always non-negative.
+// For example, thinking of a clock where you "wrap around" at 12, the distance
+// between 1 and 11 is two hours:
+//    modDist(11, 1, 12) == 2
+func ModDist(a, b, n float64) float64 {
+	return math.Min(PosMod(a-b, n), PosMod(b-a, n))
+}
+
+// Like ModDist2, but using faster and less accurate PosMod2 instead of math.Mod.
+func ModDist2(a, b, n float64) float64 {
+	return math.Min(PosMod2(a-b, n), PosMod2(b-a, n))
 }
 
 //================================================================================
-// HELPERS
+// CONVERSIONS
 
 // Given a float in the range 0-1, return a byte from 0 to 255.
 // Clamp out-of-range values at 0 or 255.
@@ -90,7 +110,7 @@ func FloatToByte(x float64) byte {
 }
 
 //================================================================================
-// COLOR UTILS
+// REMAP AND CLAMP
 
 // Remap the float x from the range oldmin-oldmax to the range newmin-newmax.
 // Does not clamp values that exceed min or max.
@@ -152,6 +172,9 @@ func Clamp(x, minn, maxx float64) float64 {
 	}
 }
 
+//================================================================================
+// COS
+
 // A cosine curve scaled to fit in a 0-1 range and 0-1 domain by default.
 //    offset: how much to slide the curve across the domain (should be 0-1)
 //    period: the length of one wave
@@ -166,6 +189,9 @@ func Cos2(x, offset, period, minn, maxx float64) float64 {
 	var value = CosTable((x/period-offset)*math.Pi*2)/2 + 0.5
 	return value*(maxx-minn) + minn
 }
+
+//================================================================================
+// CONTRAST, CLIPPING, THRESHOLD
 
 // Expand the color values by a factor of mult around the pivot value of center.
 //    color: an (r, g, b) tuple
@@ -195,19 +221,8 @@ func ClipBlack(x, threshold float64) float64 {
 // TODO: RBGClipBlackByChannel
 // TODO: RBGClipBlackByLuminance
 
-// Return the distance between floats a and b, modulo n.
-// The result is always non-negative.
-// For example, thinking of a clock where you "wrap around" at 12, the distance
-// between 1 and 11 is two hours:
-//    modDist(11, 1, 12) == 2
-func ModDist(a, b, n float64) float64 {
-	return math.Min(PosMod(a-b, n), PosMod(b-a, n))
-}
-
-// Like ModDist2, but using faster and less accurate PosMod2 instead of math.Mod.
-func ModDist2(a, b, n float64) float64 {
-	return math.Min(PosMod2(a-b, n), PosMod2(b-a, n))
-}
+//================================================================================
+// GAMMA
 
 // Apply a gamma exponent to x.  If x is negative, return 0.
 func Gamma(x, gamma float64) float64 {
@@ -237,6 +252,9 @@ func GammaRgb(r, g, b, gamma float64) (float64, float64, float64) {
 	}
 	return r, g, b
 }
+
+//================================================================================
+// HSL
 
 // Inputs in the range 0-1.
 // Results in the range 0-1.
