@@ -14,24 +14,24 @@ import (
 
 func MakePatternEye(locations []float64) ByteThread {
 
-    // get bounding box
-    n_pixels := len(locations) / 3
-    if n_pixels > 160 {
-        n_pixels = 160
-    }
-    var max_coord_x, max_coord_y, max_coord_z float64
-    var min_coord_x, min_coord_y, min_coord_z float64
-    for ii := 0; ii < n_pixels; ii++ {
-        x := locations[ii*3+0]
-        y := locations[ii*3+1]
-        z := locations[ii*3+2]
+	// get bounding box
+	n_pixels := len(locations) / 3
+	if n_pixels > 160 {
+		n_pixels = 160
+	}
+	var max_coord_x, max_coord_y, max_coord_z float64
+	var min_coord_x, min_coord_y, min_coord_z float64
+	for ii := 0; ii < n_pixels; ii++ {
+		x := locations[ii*3+0]
+		y := locations[ii*3+1]
+		z := locations[ii*3+2]
         if ii == 0 || x > max_coord_x { max_coord_x = x }
         if ii == 0 || y > max_coord_y { max_coord_y = y }
         if ii == 0 || z > max_coord_z { max_coord_z = z }
         if ii == 0 || x < min_coord_x { min_coord_x = x }
         if ii == 0 || y < min_coord_y { min_coord_y = y }
         if ii == 0 || z < min_coord_z { min_coord_z = z }
-    }
+	}
 
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
 
@@ -72,7 +72,7 @@ func MakePatternEye(locations []float64) ByteThread {
 
 				lastPupilTheta = nextPupilTheta
 				if holdingStill == 0 {
-					lastPupilTheta = colorutils.PosMod(lastPupilTheta, 360)
+					lastPupilTheta = colorutils.PosMod2(lastPupilTheta, 360)
 					if bigMove {
 						// big move
 						randomSign := 1.0
@@ -120,7 +120,7 @@ func MakePatternEye(locations []float64) ByteThread {
 
 				// flip everything upside down
 				// might be needed depending on which layout you're using
-				pixelTheta = colorutils.PosMod(pixelTheta+180, 360)
+				pixelTheta = colorutils.PosMod2(pixelTheta+180, 360)
 				//zp = 1 - zp
 
 				pupilHere := colorutils.ModDist(pupilTheta, pixelTheta, 360) / 180.0
@@ -155,13 +155,13 @@ func MakePatternEye(locations []float64) ByteThread {
 
 				//--------------------------------------------------------------------------------
 			}
-            
-            // the rest of the unused pixels should be black
+
+			// the rest of the unused pixels should be black
 			for ii := n_pixels; ii < n_actual_pixels; ii++ {
-				bytes[ii*3+0] = 0;
-				bytes[ii*3+1] = 0;
-				bytes[ii*3+2] = 0;
-            }
+				bytes[ii*3+0] = 0
+				bytes[ii*3+1] = 0
+				bytes[ii*3+2] = 0
+			}
 
 			// Send our completed byte slice over the output channel
 			bytesOut <- bytes

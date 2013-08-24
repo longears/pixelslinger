@@ -82,11 +82,11 @@ func (mi *MyImage) getInterpolatedColor(x, y float64, wrapMethod string) (r, g, 
 		x = colorutils.Clamp(x, 0, 1)
 		y = colorutils.Clamp(y, 0, 1)
 	case "mirror":
-		x = colorutils.PosMod(x, 2)
+		x = colorutils.PosMod2(x, 2)
 		if x > 1 {
 			x = 2 - x
 		}
-		y = colorutils.PosMod(y, 2)
+		y = colorutils.PosMod2(y, 2)
 		if y > 1 {
 			y = 2 - y
 		}
