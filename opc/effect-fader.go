@@ -27,6 +27,8 @@ func MakeEffectFader(locations []float64) ByteThread {
 		TWINKLE_DURATION    = 8.0 / 40.0
 
 		EYELID_BLEND = 0.25 // size of eyelid gradient relative to entire bounding box
+
+		FADE_TO_BLACK_TIME = 15.0 / 40.0 // in seconds
 	)
 
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
@@ -69,6 +71,8 @@ func MakeEffectFader(locations []float64) ByteThread {
 		lastFlashTime := 0.0
 		lastTwinkleTime := 0.0
 		lastTwinklePad := 0.0
+		lastFadeToBlackPad := 0.0
+		fadeToBlackBeginTime := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
 			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
@@ -103,6 +107,18 @@ func MakeEffectFader(locations []float64) ByteThread {
 
 			// saturation knob
 			desatKnob := float64(midiState.ControllerValues[config.DESAT_KNOB]) / 127.0
+
+			// fade to black pad
+			fadeToBlackPad := float64(midiState.KeyVolumes[config.FADE_TO_BLACK_PAD]) / 127.0
+			if fadeToBlackPad > 0 && lastFadeToBlackPad == 0 {
+				// pad has just gone down
+				fadeToBlackBeginTime = t
+			}
+			fadeToBlackAmount := 1.0
+			if fadeToBlackPad > 0 {
+				fadeToBlackAmount = 1 - colorutils.Clamp((t-fadeToBlackBeginTime)/FADE_TO_BLACK_TIME, 0, 1)
+			}
+			lastFadeToBlackPad = fadeToBlackPad
 
 			// fill in bytes array
 			for ii := 0; ii < n_pixels; ii++ {
@@ -184,6 +200,13 @@ func MakeEffectFader(locations []float64) ByteThread {
 					r = r*(1-desatKnob) + gray*desatKnob
 					g = g*(1-desatKnob) + gray*desatKnob
 					b = b*(1-desatKnob) + gray*desatKnob
+				}
+
+				// fade to black
+				if fadeToBlackPad > 0 {
+					r *= fadeToBlackAmount
+					g *= fadeToBlackAmount
+					b *= fadeToBlackAmount
 				}
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)

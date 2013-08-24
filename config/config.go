@@ -6,13 +6,14 @@ import (
 
 // midi pads
 const (
-	FLASH_PAD        = midi.LPD8_PAD1
-	TWINKLE_PAD      = midi.LPD8_PAD2
-	RIPPLE_PAD       = midi.LPD8_PAD3 // todo
-	SLOWMO_PAD       = midi.LPD8_PAD4
-	BLINK_CIRCLE_PAD = midi.LPD8_PAD5
-	BLINK_ARCH_PAD   = midi.LPD8_PAD6
-	BLINK_BACK_PAD   = midi.LPD8_PAD7
+	FLASH_PAD         = midi.LPD8_PAD1
+	TWINKLE_PAD       = midi.LPD8_PAD2
+	RIPPLE_PAD        = midi.LPD8_PAD3 // todo
+	SLOWMO_PAD        = midi.LPD8_PAD4
+	BLINK_CIRCLE_PAD  = midi.LPD8_PAD5
+	BLINK_ARCH_PAD    = midi.LPD8_PAD6
+	BLINK_BACK_PAD    = midi.LPD8_PAD7
+	FADE_TO_BLACK_PAD = midi.LPD8_PAD8
 )
 
 // midi knobs
