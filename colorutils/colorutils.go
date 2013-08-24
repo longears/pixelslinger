@@ -193,7 +193,7 @@ func Cos2(x, offset, period, minn, maxx float64) float64 {
 // CONTRAST, CLIPPING, THRESHOLD
 
 // Expand the color values by a factor of mult around the pivot value of center.
-//    color: an (r, g, b) tuple
+//    x: a float
 //    center: a float -- the fixed point
 //    mult: a float -- expand or contract the values around the center point
 func Contrast(x, center, mult float64) float64 {
@@ -206,6 +206,24 @@ func ContrastRgb(r, g, b, center, mult float64) (r2 float64, g2 float64, b2 floa
 	g2 = (g-center)*mult + center
 	b2 = (b-center)*mult + center
 	return
+}
+
+// Expand the color values by a factor of mult around the pivot value of center.
+// Then clamp the result 
+//    x: a float
+//    center: a float -- the fixed point
+//    mult: a float -- expand or contract the values around the center point
+//    minn: lower end of the clamp
+//    maxx: lower end of the clamp
+func ContrastAndClamp(x, center, mult, minn, maxx float64) float64 {
+	x = (x-center)*mult + center
+	if x <= minn {
+		return minn
+	} else if x >= maxx {
+		return maxx
+	} else {
+		return x
+	}
 }
 
 // If x is less than threshold, return 0.  Otherwise, return x.

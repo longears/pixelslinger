@@ -392,6 +392,28 @@ func BenchmarkContrastRgb(b *testing.B) {
 	_ = gg
 	_ = bb
 }
+func BenchmarkContrastAndClamp(b *testing.B) {
+	var rr, gg, bb float64
+	for i := 0; i < b.N; i++ {
+		rr = ContrastAndClamp(0.3, 0.3, 0.3, 0, 1)
+		gg = ContrastAndClamp(0.3, 0.3, 0.3, 0, 1)
+		bb = ContrastAndClamp(0.3, 0.3, 0.3, 0, 1)
+	}
+	_ = rr
+	_ = gg
+	_ = bb
+}
+func BenchmarkContrastThenClamp(b *testing.B) {
+	var rr, gg, bb float64
+	for i := 0; i < b.N; i++ {
+		rr = Clamp(Contrast(0.3, 0.3, 0.3), 0, 1)
+		gg = Clamp(Contrast(0.3, 0.3, 0.3), 0, 1)
+		bb = Clamp(Contrast(0.3, 0.3, 0.3), 0, 1)
+	}
+	_ = rr
+	_ = gg
+	_ = bb
+}
 
 //================================================================================
 func clipBlackTestHelper(t *testing.T, x, threshold, result float64) {
