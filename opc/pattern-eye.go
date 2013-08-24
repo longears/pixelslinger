@@ -91,7 +91,7 @@ func MakePatternEye(locations []float64) ByteThread {
 				if holdingStill == 1 {
 					moveDuration = rand.Float64()*0.3 + 0.1
 				} else {
-					moveDuration = colorutils.Abs(nextPupilTheta-lastPupilTheta)/180*0.2 + 0.05
+					moveDuration = math.Abs(nextPupilTheta-lastPupilTheta)/180*0.2 + 0.05
 				}
 				lastPupilTime = nextPupilTime
 				nextPupilTime = t + moveDuration

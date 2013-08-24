@@ -65,7 +65,7 @@ func MakePatternSailorMoon(locations []float64) ByteThread {
 
 				// twinkle occasional LEDs
 				twinkle := colorutils.PosMod(random*7+t*TWINKLE_SPEED, 1)
-				twinkle = colorutils.Abs(twinkle*2 - 1)
+				twinkle = math.Abs(twinkle*2 - 1)
 				twinkle = colorutils.Remap(twinkle, 0, 1, -1/TWINKLE_DENSITY, 1.1)
 				twinkle = colorutils.Clamp(twinkle, -0.5, 1.1)
 				twinkle = math.Pow(twinkle, 5)
