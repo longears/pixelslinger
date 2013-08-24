@@ -210,7 +210,7 @@ func MakePatternSunset(locations []float64) ByteThread {
 					// fade at horizon
 					starAmt *= math.Pow(colorutils.RemapAndClamp(zp, 0.35, 0.48, 0, 1), 2)
 					// individual stars
-					starAmt *= colorutils.Clamp(colorutils.Contrast(randomValues[ii], STAR_THRESH, STAR_CONTRAST), 0, 1)
+					starAmt *= colorutils.ContrastAndClamp(randomValues[ii], STAR_THRESH, STAR_CONTRAST, 0, 1)
 					// twinkle
 					starAmt *= colorutils.Cos(t, randomValues[ii], 0.3+2*colorutils.PosMod2(randomValues[ii]*7, 1), 0.6, 1)
 					r += starAmt
