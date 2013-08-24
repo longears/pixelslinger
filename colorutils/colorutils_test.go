@@ -10,7 +10,7 @@ func TestCosTable(t *testing.T) {
 		correct = math.Cos(x)
 		approx = CosTable(x)
 		diff = math.Abs(correct - approx)
-		if diff > 0.1 {
+		if diff > 0.01 {
 			t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
 		}
 	}
@@ -19,7 +19,7 @@ func TestCosTable(t *testing.T) {
 		correct = math.Cos(x)
 		approx = CosTable(x)
 		diff = math.Abs(correct - approx)
-		if diff > 0.1 {
+		if diff > 0.01 {
 			t.Errorf("Cos != CosTable: %v - %v = %v", correct, approx, diff)
 		}
 	}
@@ -98,6 +98,78 @@ func TestPosMod2(t *testing.T) {
 func BenchmarkPosMod2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		PosMod2(1431.4, 104.5)
+	}
+}
+
+//================================================================================
+func modDistTestHelper(t *testing.T, a, b, n, result float64) {
+	if tmp := ModDist(a, b, n); tmp != result {
+		t.Errorf("ModDist(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
+	}
+}
+func TestModDist(t *testing.T) {
+	// a, b, n
+	modDistTestHelper(t, 0.0, 0.0, 10.0, 0.0)
+	modDistTestHelper(t, 1.0, 1.0, 10.0, 0.0)
+	modDistTestHelper(t, 1.0, 2.0, 10.0, 1.0)
+	modDistTestHelper(t, 2.0, 1.0, 10.0, 1.0)
+	modDistTestHelper(t, 1.0, 9.0, 10.0, 2.0)
+	modDistTestHelper(t, 9.0, 1.0, 10.0, 2.0)
+
+	modDistTestHelper(t, -1.0, 1.0, 10.0, 2.0)
+
+	modDistTestHelper(t, 70.0, 70.0, 10.0, 0.0)
+	modDistTestHelper(t, 71.0, 71.0, 10.0, 0.0)
+	modDistTestHelper(t, 71.0, 72.0, 10.0, 1.0)
+	modDistTestHelper(t, 72.0, 71.0, 10.0, 1.0)
+	modDistTestHelper(t, 71.0, 79.0, 10.0, 2.0)
+	modDistTestHelper(t, 79.0, 71.0, 10.0, 2.0)
+
+	modDistTestHelper(t, -71.0, -71.0, 10.0, 0.0)
+	modDistTestHelper(t, -71.0, -72.0, 10.0, 1.0)
+	modDistTestHelper(t, -72.0, -71.0, 10.0, 1.0)
+	modDistTestHelper(t, -71.0, -79.0, 10.0, 2.0)
+	modDistTestHelper(t, -79.0, -71.0, 10.0, 2.0)
+}
+func BenchmarkModDist(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ModDist(1.0, 2.0, 10.0)
+	}
+}
+
+//================================================================================
+func modDist2TestHelper(t *testing.T, a, b, n, result float64) {
+	if tmp := ModDist2(a, b, n); math.Abs(tmp-result) > 0.001 {
+		t.Errorf("ModDist2(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
+	}
+}
+func TestModDist2(t *testing.T) {
+	// a, b, n
+	modDist2TestHelper(t, 0.0, 0.0, 10.0, 0.0)
+	modDist2TestHelper(t, 1.0, 1.0, 10.0, 0.0)
+	modDist2TestHelper(t, 1.0, 2.0, 10.0, 1.0)
+	modDist2TestHelper(t, 2.0, 1.0, 10.0, 1.0)
+	modDist2TestHelper(t, 1.0, 9.0, 10.0, 2.0)
+	modDist2TestHelper(t, 9.0, 1.0, 10.0, 2.0)
+
+	modDist2TestHelper(t, -1.0, 1.0, 10.0, 2.0)
+
+	modDist2TestHelper(t, 70.0, 70.0, 10.0, 0.0)
+	modDist2TestHelper(t, 71.0, 71.0, 10.0, 0.0)
+	modDist2TestHelper(t, 71.0, 72.0, 10.0, 1.0)
+	modDist2TestHelper(t, 72.0, 71.0, 10.0, 1.0)
+	modDist2TestHelper(t, 71.0, 79.0, 10.0, 2.0)
+	modDist2TestHelper(t, 79.0, 71.0, 10.0, 2.0)
+
+	modDist2TestHelper(t, -71.0, -71.0, 10.0, 0.0)
+	modDist2TestHelper(t, -71.0, -72.0, 10.0, 1.0)
+	modDist2TestHelper(t, -72.0, -71.0, 10.0, 1.0)
+	modDist2TestHelper(t, -71.0, -79.0, 10.0, 2.0)
+	modDist2TestHelper(t, -79.0, -71.0, 10.0, 2.0)
+}
+func BenchmarkModDist2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ModDist2(1.0, 2.0, 10.0)
 	}
 }
 
@@ -255,6 +327,29 @@ func BenchmarkCos(b *testing.B) {
 		Cos(x, 0.0, 1.0, 0.0, 1.0)
 	}
 }
+
+//================================================================================
+func cos2TestHelper(t *testing.T, x, offset, period, minn, maxx, result float64) {
+	tmp := Cos2(x, offset, period, minn, maxx)
+	if math.Abs(tmp-result) > 0.01 {
+		t.Errorf("Cos(%f,%f,%f,%f,%f) = %f, want %f", x, offset, period, minn, maxx, tmp, result)
+	}
+}
+func TestCos2(t *testing.T) {
+	// x, offset, period, minn, maxx
+	cos2TestHelper(t, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0)
+	cos2TestHelper(t, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0)
+	cos2TestHelper(t, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0)
+
+	cos2TestHelper(t, 0.0, 0.0, 2.0, 0.0, 1.0, 1.0)
+	cos2TestHelper(t, 1.0, 0.0, 2.0, 0.0, 1.0, 0.0)
+	cos2TestHelper(t, 2.0, 0.0, 2.0, 0.0, 1.0, 1.0)
+
+	cos2TestHelper(t, 0.0, 0.5, 2.0, 0.0, 1.0, 0.0)
+
+	cos2TestHelper(t, 0.5, 0.0, 1.0, 4.0, 5.0, 4.0)
+	cos2TestHelper(t, 1.0, 0.0, 1.0, 4.0, 5.0, 5.0)
+}
 func BenchmarkCos2(b *testing.B) {
 	var x float64 = 0
 	for i := 0; i < b.N; i++ {
@@ -317,78 +412,6 @@ func BenchmarkClipBlack(b *testing.B) {
 }
 
 //================================================================================
-func modDistTestHelper(t *testing.T, a, b, n, result float64) {
-	if tmp := ModDist(a, b, n); tmp != result {
-		t.Errorf("ModDist(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
-	}
-}
-func TestModDist(t *testing.T) {
-	// a, b, n
-	modDistTestHelper(t, 0.0, 0.0, 10.0, 0.0)
-	modDistTestHelper(t, 1.0, 1.0, 10.0, 0.0)
-	modDistTestHelper(t, 1.0, 2.0, 10.0, 1.0)
-	modDistTestHelper(t, 2.0, 1.0, 10.0, 1.0)
-	modDistTestHelper(t, 1.0, 9.0, 10.0, 2.0)
-	modDistTestHelper(t, 9.0, 1.0, 10.0, 2.0)
-
-	modDistTestHelper(t, -1.0, 1.0, 10.0, 2.0)
-
-	modDistTestHelper(t, 70.0, 70.0, 10.0, 0.0)
-	modDistTestHelper(t, 71.0, 71.0, 10.0, 0.0)
-	modDistTestHelper(t, 71.0, 72.0, 10.0, 1.0)
-	modDistTestHelper(t, 72.0, 71.0, 10.0, 1.0)
-	modDistTestHelper(t, 71.0, 79.0, 10.0, 2.0)
-	modDistTestHelper(t, 79.0, 71.0, 10.0, 2.0)
-
-	modDistTestHelper(t, -71.0, -71.0, 10.0, 0.0)
-	modDistTestHelper(t, -71.0, -72.0, 10.0, 1.0)
-	modDistTestHelper(t, -72.0, -71.0, 10.0, 1.0)
-	modDistTestHelper(t, -71.0, -79.0, 10.0, 2.0)
-	modDistTestHelper(t, -79.0, -71.0, 10.0, 2.0)
-}
-func BenchmarkModDist(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ModDist(1.0, 2.0, 10.0)
-	}
-}
-
-//================================================================================
-func modDist2TestHelper(t *testing.T, a, b, n, result float64) {
-	if tmp := ModDist2(a, b, n); math.Abs(tmp-result) > 0.001 {
-		t.Errorf("ModDist2(%f,%f,%f) = %f, want %f", a, b, n, tmp, result)
-	}
-}
-func TestModDist2(t *testing.T) {
-	// a, b, n
-	modDist2TestHelper(t, 0.0, 0.0, 10.0, 0.0)
-	modDist2TestHelper(t, 1.0, 1.0, 10.0, 0.0)
-	modDist2TestHelper(t, 1.0, 2.0, 10.0, 1.0)
-	modDist2TestHelper(t, 2.0, 1.0, 10.0, 1.0)
-	modDist2TestHelper(t, 1.0, 9.0, 10.0, 2.0)
-	modDist2TestHelper(t, 9.0, 1.0, 10.0, 2.0)
-
-	modDist2TestHelper(t, -1.0, 1.0, 10.0, 2.0)
-
-	modDist2TestHelper(t, 70.0, 70.0, 10.0, 0.0)
-	modDist2TestHelper(t, 71.0, 71.0, 10.0, 0.0)
-	modDist2TestHelper(t, 71.0, 72.0, 10.0, 1.0)
-	modDist2TestHelper(t, 72.0, 71.0, 10.0, 1.0)
-	modDist2TestHelper(t, 71.0, 79.0, 10.0, 2.0)
-	modDist2TestHelper(t, 79.0, 71.0, 10.0, 2.0)
-
-	modDist2TestHelper(t, -71.0, -71.0, 10.0, 0.0)
-	modDist2TestHelper(t, -71.0, -72.0, 10.0, 1.0)
-	modDist2TestHelper(t, -72.0, -71.0, 10.0, 1.0)
-	modDist2TestHelper(t, -71.0, -79.0, 10.0, 2.0)
-	modDist2TestHelper(t, -79.0, -71.0, 10.0, 2.0)
-}
-func BenchmarkModDist2(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ModDist2(1.0, 2.0, 10.0)
-	}
-}
-
-//================================================================================
 func gammaTestHelper(t *testing.T, x, gamma, result float64) {
 	if tmp := Gamma(x, gamma); tmp != result {
 		t.Errorf("Gamma(%f,%f) = %f, want %f", x, gamma, tmp, result)
@@ -406,7 +429,12 @@ func TestGamma(t *testing.T) {
 }
 func BenchmarkGamma(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Gamma(0.7, 0.7)
+		Gamma(0.7, 2.2)
+	}
+}
+func BenchmarkGammaRgb(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		GammaRgb(0.1, 0.2, 0.3, 2.2)
 	}
 }
 
@@ -439,4 +467,9 @@ func TestHslToRgb(t *testing.T) {
 	hslToRgbTestHelper(t, 1.0/6+3, 1.0, 0.5, 1.0, 1.0, 0.0)
 
 	hslToRgbTestHelper(t, 0.0/3, 0.5, 0.5, 0.75, 0.25, 0.25)
+}
+func BenchmarkHslToRgb(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		HslToRgb(0.1, 0.2, 0.3)
+	}
 }
