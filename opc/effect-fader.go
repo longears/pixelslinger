@@ -102,7 +102,7 @@ func MakeEffectFader(locations []float64) ByteThread {
 			eyelidKnob = colorutils.Clamp(colorutils.Remap(eyelidKnob, 0.05, 0.95, 0, 1), 0, 1)
 
 			// saturation knob
-			satKnob := float64(midiState.ControllerValues[config.SAT_KNOB]) / 127.0
+			desatKnob := float64(midiState.ControllerValues[config.DESAT_KNOB]) / 127.0
 
 			// fill in bytes array
 			for ii := 0; ii < n_pixels; ii++ {
@@ -178,12 +178,12 @@ func MakeEffectFader(locations []float64) ByteThread {
 					b = 1
 				}
 
-				// saturation
-				if satKnob != 127 {
+				// desaturation
+				if desatKnob != 0 {
 					gray := (r + g + b) / 3.0 * 1.3 // boost it a little bit
-					r = r*satKnob + gray*(1-satKnob)
-					g = g*satKnob + gray*(1-satKnob)
-					b = b*satKnob + gray*(1-satKnob)
+					r = r*(1-desatKnob) + gray*desatKnob
+					g = g*(1-desatKnob) + gray*desatKnob
+					b = b*(1-desatKnob) + gray*desatKnob
 				}
 
 				bytes[ii*3+0] = colorutils.FloatToByte(r)

@@ -4,17 +4,17 @@ speed-enable more patterns
 idle attract mode
 
 new patterns
-    sunset / day / night cycle
-    rotating sun beams
+        sunset / day / night cycle
+        rotating sun beams
     dappled forest floor
     fireflies / shooting stars
     loading indicator
 
 new effects
-    ripple pad
-        slowmo pad
         blink various regions
-    red, green, blue blinks
         hue knob
         saturation knob
+        slowmo pad
     color extract knob
+    red, green, blue blinks
+    ripple pad
