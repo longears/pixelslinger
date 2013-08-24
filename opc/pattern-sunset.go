@@ -3,6 +3,7 @@ package opc
 import (
 	"fmt"
 	"github.com/longears/pixelslinger/colorutils"
+	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
 	"image"
 	_ "image/color"
@@ -126,13 +127,13 @@ func (mi *MyImage) getInterpolatedColor(x, y float64, wrapMethod string) (r, g, 
 func MakePatternSunset(locations []float64) ByteThread {
 
 	var (
-		IMG_PATH = "images/sky4_square.png"
+		IMG_PATH            = "images/sky4_square.png"
 		DAY_LENGTH          = 20.0 // seconds
 		SUN_SOFT_EDGE       = 0.2
-		STAR_BRIGHTNESS_EXP = 2.7  // higher number means fewer bright stars
+		STAR_BRIGHTNESS_EXP = 2.7 // higher number means fewer bright stars
 		STAR_THRESH         = 0.95
 		STAR_CONTRAST       = 3.0
-		STAR_FADE_EXP       = 4.0  // higher numbers keep stars from showing during sunrise/sunset
+		STAR_FADE_EXP       = 4.0 // higher numbers keep stars from showing during sunrise/sunset
 	)
 
 	// make persistant random values
@@ -163,10 +164,26 @@ func MakePatternSunset(locations []float64) ByteThread {
 	myImage.populateFromImage(IMG_PATH)
 
 	return func(bytesIn chan []byte, bytesOut chan []byte, midiState *midi.MidiState) {
+		last_t := 0.0
+		t := 0.0
 		for bytes := range bytesIn {
 			n_pixels := len(bytes) / 3
-			t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
-			_ = t
+
+			// time and speed knob bookkeeping
+			this_t := float64(time.Now().UnixNano())/1.0e9 - 9.4e8
+			speedKnob := float64(midiState.ControllerValues[config.SPEED_KNOB]) / 127.0
+			if speedKnob < 0.5 {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0, 0.4, 0, 1)
+			} else {
+				speedKnob = colorutils.RemapAndClamp(speedKnob, 0.6, 1, 1, 4)
+			}
+			if midiState.KeyVolumes[config.SLOWMO_PAD] > 0 {
+				speedKnob *= 0.25
+			}
+			if last_t != 0 {
+				t += (this_t - last_t) * speedKnob
+			}
+			last_t = this_t
 
 			for ii := 0; ii < n_pixels; ii++ {
 				//--------------------------------------------------------------------------------

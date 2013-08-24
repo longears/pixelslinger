@@ -19,7 +19,7 @@ const (
 const (
 	GAIN_KNOB   = midi.LPD8_KNOB1 // effect
 	EYELID_KNOB = midi.LPD8_KNOB2 // effect
-	SPEED_KNOB  = midi.LPD8_KNOB3 //   pattern (diamond, fire, shield)
+	SPEED_KNOB  = midi.LPD8_KNOB3 //   pattern (diamond, fire, shield, sunset)
 	SWITCH_KNOB = midi.LPD8_KNOB4 //     midi-switcher
 	MORPH_KNOB  = midi.LPD8_KNOB5 //   pattern (diamond, white)
 	HUE_KNOB    = midi.LPD8_KNOB6 //   pattern (diamond, fire, white)
