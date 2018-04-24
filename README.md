@@ -23,7 +23,7 @@ Install & compile
 
  ```
  go get github.com/longears/pixelslinger
- go get github.com/davecheney/profile
+ go get github.com/pkg/profile
  go get github.com/droundy/goopt
  ```
  
