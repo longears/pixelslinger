@@ -5,12 +5,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecheney/profile"
 	"github.com/droundy/goopt"
 	"github.com/longears/pixelslinger/beaglebone"
 	"github.com/longears/pixelslinger/config"
 	"github.com/longears/pixelslinger/midi"
 	"github.com/longears/pixelslinger/opc"
+	"github.com/pkg/profile"
 	"os"
 	"runtime"
 	"sort"
